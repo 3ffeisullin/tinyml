@@ -1,0 +1,9 @@
+# Training / conversion environment (exact versions: requirements.lock.txt)
+tensorflow>=2.21
+numpy
+scipy
+scikit-learn
+pandas
+matplotlib
+mne          # EEG loading, filtering, epoching (EDF/BDF/FIF, public datasets)
+ipykernel    # use venv as a Jupyter kernel
