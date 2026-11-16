@@ -1,9 +1,16 @@
 # Project status and handoff log
 
-Last updated: 2026-11-16 by Claude Code (laptop)
+Last updated: 2026-11-16 by Claude (cloud session)
 
 This file is the shared state between the two places work happens. Read it
 before starting, and update it before you stop.
+
+## 0. Resume here
+
+- **master** is at `309a1bf` (PRs #1 and #2 merged 2026-11-16). 32 tests pass on the laptop.
+- **Active branch:** `feature/int8-sleep-model` (draft PR #3). Its first commit records the merges (this update).
+- **Next work:** task 4 in §5 (int8 sleep model), then task 5 (Oura app skeleton).
+- **Waiting on Farid:** Docker Desktop install (needed before task 5b, the hub stack), parts order status, Oura developer app registration.
 
 ## 1. Who works where
 
@@ -23,16 +30,16 @@ before starting, and update it before you stop.
 | Phase | Item | Status | Where |
 |---|---|---|---|
 | Setup | Toolchain smoke test (synthetic model on the XIAO) | Done 2026-11-05 | `scripts/smoke_test.py`, `firmware/eeg_smoke/` |
-| A | Requirements | In review | PR #1, `docs/requirements.md` |
-| A | Python reference features (filters, bands incl. sigma, skew, kurtosis, epochs) | In review, 30 tests pass in the cloud and on the laptop (2026-11-16) | PR #1, `eegml/`, `tests/` |
-| A | Firmware test vectors | In review | PR #1, `tests/vectors/`, `firmware/test_vectors/` |
+| A | Requirements | Done (merged 2026-11-16) | `docs/requirements.md` |
+| A | Python reference features (filters, bands incl. sigma, skew, kurtosis, epochs) | Done (merged 2026-11-16); 32 tests pass on the laptop | `eegml/`, `tests/` |
+| A | Firmware test vectors | Done (merged 2026-11-16) | `tests/vectors/`, `firmware/test_vectors/` |
 | A | Sleep-EDF baseline (REQ-ML-02) | **Done 2026-11-16, PASS**: 20 subjects, device features macro F1 0.680 / acc 0.774 vs MNE-tutorial features 0.621 / 0.729 | `reports/sleep_edf_baseline.md` |
-| A | Int8 sleep model + conversion report (REQ-ML-03) | Not started | — |
+| A | Int8 sleep model + conversion report (REQ-ML-03/04) | **Next**: branch `feature/int8-sleep-model`, draft PR #3 | `scripts/train_sleep_model.py`, `reports/` (to come) |
 | B | Firmware: ADS1115 acquisition, filters, features, parity test | Not started; waits for parts | `firmware/eeg_node/` (to come) |
 | C | Oura app (OAuth2, nightly pull, sandbox) | Not started; must run on the laptop | `hub/` (to come) |
 | C | Hub stack (Mosquitto, ingest, InfluxDB, Grafana) | Not started | `hub/` (to come) |
 | D | Overnight recording with Oura | Not started | — |
-| Team | VS Code workspace (extensions, tests, Run Tasks) and onboarding guide | In review; verified on the laptop 2026-11-16 (32 tests in the Testing panel and the run-all-tests task) | PR #2, `.vscode/`, `docs/getting-started.md` |
+| Team | VS Code workspace (extensions, tests, Run Tasks) and onboarding guide | Done (merged 2026-11-16); verified on the laptop | `.vscode/`, `docs/getting-started.md` |
 
 ## 3. Laptop runtime environment
 
@@ -60,7 +67,7 @@ Code: confirm each line, fix anything wrong, fill the blanks, and note the date.
 
 ## 4. Open questions for Farid
 
-1. Review PR #1's decisions (requirements §7): band edges, 29 windows per epoch, skew/kurtosis on the filtered signal.
+1. ~~Review PR #1's decisions (requirements §7)~~ Accepted by merging PR #1, 2026-11-16.
 2. Have the front-end parts been ordered, and when do they arrive? The funding deck assumed a demo on Fri 2026-11-20.
 3. Oura developer app: registered yet? Needs an Oura account with an active membership for a Gen3+ ring.
 4. Repository rename: GitHub still shows `3ffeisullin/tinyml` with default branch `master`.
@@ -72,10 +79,12 @@ Code: confirm each line, fix anything wrong, fill the blanks, and note the date.
 |---|---|---|---|
 | 1 | ~~Check out PR #1's branch, install requirements, run `pytest`, run the Sleep-EDF baseline (20 subjects), commit `reports/` to the branch~~ Done 2026-11-16 | Claude Code | REQ-ML-01/02 |
 | 2 | ~~Fill in §3 (environment)~~ Done 2026-11-16 | Claude Code | — |
-| 3 | Merge PR #1 (tests and baseline are in), then PR #2 | Farid | — |
+| 3 | ~~Merge PR #1, then PR #2~~ Done 2026-11-16 (Claude Code, with Farid's one-time approval) | Farid | — |
 | 3a | ~~Run the new real-data test on the laptop: `python -m pytest tests/test_sleep_edf_real.py` should pass, not skip~~ Done 2026-11-16: passes | Claude Code | REQ-ML-01 |
-| 4 | Train the first sleep model on device features, quantise to int8, write the conversion report | Claude Code or cloud | REQ-ML-03/04 |
-| 5 | Oura app skeleton in `hub/oura_app/`, sandbox first | Claude Code | REQ-OURA-01..07 |
+| 4 | **Int8 sleep model.** New `scripts/train_sleep_model.py` reading the cached features in `data/cache/sleep_edf/` (no re-download): standardise features per subject (stands in for per-session calibration, REQ-FEAT-10); small dense network (input = current epoch's 30 features plus the previous 2 epochs', a few thousand parameters); same 5-fold leave-subjects-out split as the baseline, with the random forest as the bar to beat; post-training int8 quantisation with a representative set from training folds only; report float vs int8 accuracy, macro F1, per-stage recall, agreement (≥ 98 %), model bytes and an arena estimate in `reports/sleep_model.md`; export the int8 model to `firmware/eeg_node/sleep_model.h`. Tests for the windowing of neighbour epochs and the export. | Claude Code (laptop, has the data) | REQ-ML-03/04, FEAT-10 |
+| 4b | Run the exported model on the XIAO with the `eeg_smoke` pattern (embedded test epochs, print arena used and µs per inference) | Claude Code | REQ-ML-04 |
+| 5 | **Oura app skeleton** in `hub/oura_app/`: plain Python first (no Docker needed): OAuth2 sign-in with a localhost callback page, encrypted token file, nightly pull + 3-day re-pull, UTC conversion, 401/429 handling, sandbox mode; tests with mocked API responses. Client ID/secret in a git-ignored `.env`. | Claude Code | REQ-OURA-01..07 |
+| 5b | Hub stack in Docker Compose (Mosquitto, ingest, InfluxDB, Grafana, Oura app) — **needs Docker Desktop installed** | Claude Code | REQ-HUB-01, OURA-08 |
 | 6 | Firmware `eeg_node`: parity test on the board using `firmware/test_vectors/` before any hardware is wired | Claude Code | REQ-FEAT-09 |
 | 7 | ADS1115 acquisition once parts arrive | Claude Code | REQ-HW-*, REQ-ACQ-* |
 
@@ -83,6 +92,7 @@ Code: confirm each line, fix anything wrong, fill the blanks, and note the date.
 
 Newest first. One line per change: date, who, what, where.
 
+- 2026-11-16 · cloud · PRs #1 and #2 merged into master (`0db9aa5`, `309a1bf`) by Claude Code with Farid's one-time approval; the "Farid merges" rule stands for future PRs. Phase A items and the VS Code workspace moved to Done. New branch `feature/int8-sleep-model` (draft PR #3) with §0 "Resume here" and detailed specs for tasks 4 (int8 model) and 5 (Oura app). Order agreed with Farid: task 4, then task 5; Docker Desktop install becomes necessary at task 5b.
 - 2026-11-16 · Claude Code (laptop) · PR #2 verified on the laptop: `python -m pytest` 32 passed; `tests/test_sleep_edf_real.py` passes, not skipped (subject 0 → 841 epochs). Farid checked VS Code: Testing panel 32/32 green, and the "Python: run all tests" task ends with 32 passed. On first open VS Code reported "An Invalid Python interpreter is selected"; fixed via Enter interpreter path to the repo venv. Clicking the warning leads to "Create Environment"; cancel it with Esc (no `.venv` was created). That fix is now in `docs/getting-started.md` step 3. AVG: the General → Exceptions path (`https://<host>/*`) is what worked for physionet.org; Web Shield exclusions are kept as a fallback in §3 and the guide. Notion mirror updated.
 
 - 2026-11-16 · cloud · PR #2 (stacked on PR #1): VS Code workspace (`.vscode/` recommended extensions, venv + pytest settings, Run Tasks for tests, vectors, baseline, firmware compile/upload/monitor) and `docs/getting-started.md` for new team members. Loader hardening after the channel-name bug: missing channel now raises with the available names instead of being skipped; only download errors skip a subject; EDF header warnings silenced; progress lines flush. New `tests/test_sleep_edf_real.py` runs on a cached real night (expects 841 epochs for subject 0) and skips elsewhere. Corrected the AVG exceptions path in §3. Design docs updated with the new band edges and the baseline result.
