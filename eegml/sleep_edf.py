@@ -74,19 +74,60 @@ def subject_features(x_uv: np.ndarray, fs_in: float, annotations, line_freq: flo
     return ours[ok], theirs[ok], y[ok]
 
 
+class DownloadError(RuntimeError):
+    """A Sleep-EDF night could not be fetched (missing upstream, network, certificate)."""
+
+
+def find_channel(ch_names, channel: str) -> str:
+    """Return the channel's name as MNE stored it.
+
+    With infer_types=True MNE strips the type prefix ("EEG Fpz-Cz" -> "Fpz-Cz").
+    Raises ValueError naming the available channels if neither form is present,
+    so a wrong channel stops the run instead of skipping every subject.
+    """
+    for name in (channel, channel.split(" ", 1)[-1]):
+        if name in ch_names:
+            return name
+    raise ValueError(f"channel {channel!r} not found; available: {list(ch_names)}")
+
+
 def load_subject(subject: int, recording: int = 1, channel: str = "EEG Fpz-Cz"):
-    """Download (first time) and read one Sleep-EDF night. Returns x_uv, fs, annotations."""
+    """Download (first time) and read one Sleep-EDF night. Returns x_uv, fs, annotations.
+
+    Only download problems raise DownloadError (the baseline skips those subjects);
+    anything else, such as a missing channel, propagates and stops the run.
+    """
+    import warnings
+
     import mne
-    psg, hyp = mne.datasets.sleep_physionet.age.fetch_data(
-        subjects=[subject], recording=[recording], on_missing="raise", verbose=False)[0]
-    raw = mne.io.read_raw_edf(psg, stim_channel="Event marker", infer_types=True,
-                              preload=True, verbose=False)
-    ann = mne.read_annotations(hyp)
-    raw.set_annotations(ann, emit_warning=False)
-    # infer_types=True strips the type prefix ("EEG Fpz-Cz" -> "Fpz-Cz")
-    name = channel if channel in raw.ch_names else channel.split(" ", 1)[-1]
-    x = raw.get_data(picks=[name])[0] * 1e6
+    try:
+        psg, hyp = mne.datasets.sleep_physionet.age.fetch_data(
+            subjects=[subject], recording=[recording], on_missing="raise", verbose=False)[0]
+    except Exception as e:  # network, certificate, or night missing upstream
+        raise DownloadError(f"subject {subject}: {e.__class__.__name__}: {e}") from e
+    with warnings.catch_warnings():
+        # Sleep-EDF headers mix filter settings across channel types; MNE warns on every file.
+        warnings.filterwarnings("ignore", message=".*(highpass|lowpass|Highpass|Lowpass).*", category=RuntimeWarning)
+        raw = mne.io.read_raw_edf(psg, stim_channel="Event marker", infer_types=True,
+                                  preload=True, verbose=False)
+    raw.set_annotations(mne.read_annotations(hyp), emit_warning=False)
+    x = raw.get_data(picks=[find_channel(raw.ch_names, channel)])[0] * 1e6
     t0 = raw.first_time
     anns = [{"onset": a["onset"] - t0, "duration": a["duration"], "description": a["description"]}
             for a in raw.annotations]
     return x, raw.info["sfreq"], anns
+
+
+def cached_night(subject: int = 0, recording: int = 1):
+    """(psg, hypnogram) paths if this night is already in the MNE data folder, else None.
+
+    Never downloads. Sleep-EDF cassette files are named SC4<subject:02d><recording>...
+    """
+    from pathlib import Path
+
+    import mne
+    root = Path(mne.get_config("MNE_DATA") or Path.home() / "mne_data") / "physionet-sleep-data"
+    stem = f"SC4{subject:02d}{recording}"
+    psg = sorted(root.glob(f"{stem}*-PSG.edf"))
+    hyp = sorted(root.glob(f"{stem}*-Hypnogram.edf"))
+    return (str(psg[0]), str(hyp[0])) if psg and hyp else None
