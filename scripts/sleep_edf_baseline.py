@@ -23,7 +23,7 @@ from sklearn.model_selection import GroupKFold
 
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT))
-from eegml.sleep_edf import STAGE_NAMES, load_subject, subject_features  # noqa: E402
+from eegml.sleep_edf import STAGE_NAMES, DownloadError, load_subject, subject_features  # noqa: E402
 
 TUTORIAL = {"accuracy": 0.687, "macro_f1": 0.57}
 
@@ -36,15 +36,15 @@ def collect(subjects, cache: Path):
         if not f.exists():
             try:
                 x, fs, anns = load_subject(s)
-            except Exception as e:  # some subject/night combinations are missing upstream
-                print(f"  subject {s}: skipped ({e.__class__.__name__}: {e})"); continue
+            except DownloadError as e:  # missing upstream or network; other errors stop the run
+                print(f"  skipped: {e}", flush=True); continue
             ours, mne_f, y = subject_features(x, fs, anns)
             np.savez(f, ours=ours, mne=mne_f, y=y)
         d = np.load(f)
         if not len(d["y"]):
             continue
         X1.append(d["ours"]); X2.append(d["mne"]); Y.append(d["y"]); G.append(np.full(len(d["y"]), s))
-        print(f"  subject {s}: {len(d['y'])} epochs")
+        print(f"  subject {s}: {len(d['y'])} epochs", flush=True)
     if not Y:
         sys.exit("Error: no subjects loaded (all downloads/loads failed; see messages above). No report written.")
     return np.vstack(X1), np.vstack(X2), np.concatenate(Y), np.concatenate(G)

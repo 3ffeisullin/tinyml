@@ -9,11 +9,12 @@ Seeed XIAO ESP32-S3 with TensorFlow Lite Micro. (Qualcomm/Snapdragon work is a s
 |---|---|
 | Toolchain smoke test on the XIAO | Done (2026-11-05) |
 | A · Requirements, Python reference features, test vectors | In review: PR #1 |
-| A · Sleep-EDF baseline | Waiting to be run on the laptop |
+| A · Sleep-EDF baseline | Done: device features macro F1 0.680 vs 0.621 for the MNE tutorial's (REQ-ML-02 pass) |
 | B · Firmware (`eeg_node`) | Not started; waits for parts |
 | C · Oura app and hub | Not started |
 | D · Overnight recording | Not started |
 
+New to the project? Start with [`docs/getting-started.md`](docs/getting-started.md).
 Full state, the laptop environment, next tasks and the handoff log are in
 [`docs/STATUS.md`](docs/STATUS.md). Requirements are in
 [`docs/requirements.md`](docs/requirements.md). Claude Code reads

@@ -1,0 +1,76 @@
+{
+  // Terminal -> Run Task... (or Ctrl+Shift+P, "Run Task").
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "Python: run all tests",
+      "type": "process",
+      "command": "${workspaceFolder}\\venv\\Scripts\\python.exe",
+      "args": ["-m", "pytest", "-q"],
+      "group": { "kind": "test", "isDefault": true },
+      "problemMatcher": []
+    },
+    {
+      "label": "Python: export firmware test vectors",
+      "detail": "Run after any change under eegml/, then rerun the tests",
+      "type": "process",
+      "command": "${workspaceFolder}\\venv\\Scripts\\python.exe",
+      "args": ["scripts\\export_test_vectors.py"],
+      "problemMatcher": []
+    },
+    {
+      "label": "Python: Sleep-EDF baseline (20 subjects)",
+      "detail": "Downloads ~1 GB the first time; writes reports\\sleep_edf_baseline.md",
+      "type": "process",
+      "command": "${workspaceFolder}\\venv\\Scripts\\python.exe",
+      "args": ["-u", "scripts\\sleep_edf_baseline.py", "--subjects", "20"],
+      "problemMatcher": []
+    },
+    {
+      "label": "Python: toolchain smoke test (writes eeg_smoke/model.h)",
+      "type": "process",
+      "command": "${workspaceFolder}\\venv\\Scripts\\python.exe",
+      "args": ["scripts\\smoke_test.py"],
+      "problemMatcher": []
+    },
+    {
+      "label": "Firmware: compile",
+      "type": "process",
+      "command": "${config:tinyml.arduinoCli}",
+      "args": ["compile", "--fqbn", "esp32:esp32:XIAO_ESP32S3", "firmware\\${input:sketch}"],
+      "group": { "kind": "build", "isDefault": true },
+      "problemMatcher": ["$gcc"]
+    },
+    {
+      "label": "Firmware: upload",
+      "type": "process",
+      "command": "${config:tinyml.arduinoCli}",
+      "args": ["upload", "--fqbn", "esp32:esp32:XIAO_ESP32S3", "-p", "${input:port}", "firmware\\${input:sketch}"],
+      "problemMatcher": []
+    },
+    {
+      "label": "Firmware: serial monitor",
+      "detail": "Close it (trash-can icon) before uploading again",
+      "type": "process",
+      "command": "${config:tinyml.arduinoCli}",
+      "args": ["monitor", "-p", "${input:port}", "-c", "baudrate=115200"],
+      "isBackground": true,
+      "problemMatcher": []
+    }
+  ],
+  "inputs": [
+    {
+      "id": "sketch",
+      "type": "pickString",
+      "description": "Sketch folder under firmware\\",
+      "options": ["eeg_smoke"],
+      "default": "eeg_smoke"
+    },
+    {
+      "id": "port",
+      "type": "promptString",
+      "description": "XIAO serial port (COM4 is Bluetooth, not the board)",
+      "default": "COM5"
+    }
+  ]
+}

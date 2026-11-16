@@ -1,0 +1,16 @@
+{
+  // Use the repo's own venv (Python 3.12), never the EECS 635 course environments.
+  "python.defaultInterpreterPath": "${workspaceFolder}\\venv\\Scripts\\python.exe",
+  "python.terminal.activateEnvironment": true,
+  // Testing panel (flask icon) runs pytest on tests/.
+  "python.testing.pytestEnabled": true,
+  "python.testing.unittestEnabled": false,
+  "python.testing.pytestArgs": ["tests"],
+  // Arduino sketches are C++.
+  "files.associations": { "*.ino": "cpp" },
+  "files.exclude": { "**/__pycache__": true, "**/.pytest_cache": true },
+  "files.eol": "\n",
+  "editor.rulers": [100],
+  // Used by the Firmware tasks; change if Arduino IDE is installed elsewhere.
+  "tinyml.arduinoCli": "C:\\Program Files\\Arduino IDE\\resources\\app\\lib\\backend\\resources\\arduino-cli.exe"
+}

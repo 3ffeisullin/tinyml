@@ -103,6 +103,7 @@ web page to connect the Oura account; data goes to InfluxDB and Grafana.
 | `eegml/filters.py` | FEAT-04 |
 | `eegml/features.py` | FEAT-01, 02, 03, 05, 08 |
 | `eegml/epochs.py` | FEAT-06 |
-| `eegml/sleep_edf.py`, `scripts/sleep_edf_baseline.py` | ML-01, ML-02 |
+| `eegml/sleep_edf.py`, `scripts/sleep_edf_baseline.py`, `tests/test_sleep_edf_real.py` | ML-01, ML-02 |
 | `scripts/export_test_vectors.py`, `tests/vectors/`, `firmware/test_vectors/` | FEAT-09 |
 | `scripts/smoke_test.py`, `firmware/eeg_smoke/` | Toolchain check (pre-requirements) |
+| `.vscode/`, `docs/getting-started.md` | Team tooling (no requirement) |
