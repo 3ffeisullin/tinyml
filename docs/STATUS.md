@@ -84,6 +84,7 @@ Newest first. One line per change: date, who, what, where.
 
 ## 7. Links
 
+- Notion status mirror: https://app.notion.com/p/41a46e5740dc8194be90f034e4384471
 - Repo: https://github.com/3ffeisullin/tinyml · PR #1: https://github.com/3ffeisullin/tinyml/pull/1
 - HLD (Claude Docs): https://claude.ai/artifact/6HctXg8m9RzXcDUbJAaLzb
 - Detailed architecture (Claude Docs): https://claude.ai/artifact/6cdjSeZAPa5Gm7W7fLyGn6 · Notion mirror: https://app.notion.com/p/40d46e5740dc81068087e5ae23b0a104

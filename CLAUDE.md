@@ -13,7 +13,7 @@ Oura API v2 integration. Work is shared between a Claude cloud session
 1. Add a dated line to `docs/STATUS.md` §6 (newest first) saying what changed, and update §2, §3, §4 and §5 as needed.
 2. If you met a requirement, set its Status in `docs/requirements.md`.
 3. Commit on a feature branch, push, and open or update a PR into `master`. Don't merge; Farid merges.
-4. If the Notion connector is available, mirror the change on the Notion page "TinyML EEG — Project Status & Handoff". If not, say so in the log line; the cloud session will sync it.
+4. If the Notion connector is available, mirror the change on the Notion page "TinyML EEG — Project Status & Handoff" (https://app.notion.com/p/41a46e5740dc8194be90f034e4384471). If not, say so in the log line; the cloud session will sync it.
 
 ## Environment (Windows, PowerShell)
 - Use this repo's venv: `.\venv\Scripts\python.exe` (Python 3.12). Don't use the EECS 635 course setups (PlatformIO, `l4-kws-local`).
