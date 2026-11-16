@@ -7,3 +7,4 @@ pandas
 matplotlib
 mne          # EEG loading, filtering, epoching (EDF/BDF/FIF, public datasets)
 ipykernel    # use venv as a Jupyter kernel
+pytest       # tests/ (python -m pytest)
