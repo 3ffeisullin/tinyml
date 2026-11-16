@@ -1,6 +1,6 @@
 # Project status and handoff log
 
-Last updated: 2026-11-16 by Claude (cloud session)
+Last updated: 2026-11-16 by Claude Code (laptop)
 
 This file is the shared state between the two places work happens. Read it
 before starting, and update it before you stop.
@@ -24,9 +24,9 @@ before starting, and update it before you stop.
 |---|---|---|---|
 | Setup | Toolchain smoke test (synthetic model on the XIAO) | Done 2026-11-05 | `scripts/smoke_test.py`, `firmware/eeg_smoke/` |
 | A | Requirements | In review | PR #1, `docs/requirements.md` |
-| A | Python reference features (filters, bands incl. sigma, skew, kurtosis, epochs) | In review, 30 tests pass in the cloud | PR #1, `eegml/`, `tests/` |
+| A | Python reference features (filters, bands incl. sigma, skew, kurtosis, epochs) | In review, 30 tests pass in the cloud and on the laptop (2026-11-16) | PR #1, `eegml/`, `tests/` |
 | A | Firmware test vectors | In review | PR #1, `tests/vectors/`, `firmware/test_vectors/` |
-| A | Sleep-EDF baseline (REQ-ML-02) | **Not run**: needs the laptop (PhysioNet) | `scripts/sleep_edf_baseline.py` → `reports/` |
+| A | Sleep-EDF baseline (REQ-ML-02) | **Done 2026-11-16, PASS**: 20 subjects, device features macro F1 0.680 / acc 0.774 vs MNE-tutorial features 0.621 / 0.729 | `reports/sleep_edf_baseline.md` |
 | A | Int8 sleep model + conversion report (REQ-ML-03) | Not started | — |
 | B | Firmware: ADS1115 acquisition, filters, features, parity test | Not started; waits for parts | `firmware/eeg_node/` (to come) |
 | C | Oura app (OAuth2, nightly pull, sandbox) | Not started; must run on the laptop | `hub/` (to come) |
@@ -41,17 +41,18 @@ Code: confirm each line, fix anything wrong, fill the blanks, and note the date.
 | Item | Value | Confirmed |
 |---|---|---|
 | OS | Windows (PowerShell) | yes |
-| Repo clone path | _unknown — fill in_ | |
-| Python venv for this repo | `venv\` in the repo, Python 3.12.10 | 2026-11-05 |
-| TensorFlow / MNE in that venv | 2.21.0 / 1.13.2 (see `requirements.lock.txt`) | 2026-11-05 |
-| `pytest` in that venv | _not installed yet (added to requirements.txt in PR #1)_ | |
+| Repo clone path | `C:\Users\ffeis\tinyml` | 2026-11-16 |
+| Python venv for this repo | `venv\` in the repo, Python 3.12.10 | 2026-11-16 |
+| TensorFlow / MNE in that venv | 2.21.0 / 1.13.2 (see `requirements.lock.txt`) | 2026-11-16 |
+| `pytest` in that venv | 9.2.0 (installed from requirements.txt) | 2026-11-16 |
 | Arduino IDE / ESP32 core / TFLite Micro lib | 2.3.10 / 3.3.12 / Chirale_TensorFlowLite 2.0.0 | 2026-11-05 |
 | arduino-cli | `C:\Program Files\Arduino IDE\resources\app\lib\backend\resources\arduino-cli.exe` | 2026-11-05 |
 | Board FQBN | `esp32:esp32:XIAO_ESP32S3` | 2026-11-05 |
 | XIAO serial port | COM5 with a data cable (COM4 is a Bluetooth port; charge-only cables were the cause of earlier upload failures) | EECS 635 labs |
 | Separate course setup (don't mix) | EECS 635 labs use PlatformIO (`C:\Users\ffeis\.platformio\penv\Scripts\pio.exe`, espressif32@6.8.0 → Arduino core 2.0.17) and a Lab 4 venv `l4-kws-local` (Python 3.12, TF 2.19.1) | EECS 635 labs |
-| Docker Desktop (for the hub) | _unknown — fill in_ | |
-| Sleep-EDF cache | `%USERPROFILE%\mne_data` (MNE default) | |
+| Docker Desktop (for the hub) | **Not installed** (no `docker` command, no install folder, no winget entry) | 2026-11-16 |
+| Sleep-EDF cache | `%USERPROFILE%\mne_data\physionet-sleep-data` (MNE default; 20 nights, ~1 GB); per-subject features in `data\cache\sleep_edf\` (git-ignored) | 2026-11-16 |
+| AVG antivirus HTTPS scanning | AVG Web Shield re-signs HTTPS, which breaks Python/MNE downloads (`CERTIFICATE_VERIFY_FAILED`). Fix: add the bare hostname under Settings → Protection → Core Shields → Web Shield → Exclusions. Excluded so far: `physionet.org`, `api.ouraring.com`, `cloud.ouraring.com`. Check with `openssl s_client -connect <host>:443 -servername <host>`; the issuer must not be AVG. | 2026-11-16 |
 
 ## 4. Open questions for Farid
 
@@ -59,13 +60,14 @@ Code: confirm each line, fix anything wrong, fill the blanks, and note the date.
 2. Have the front-end parts been ordered, and when do they arrive? The funding deck assumed a demo on Fri 2026-11-20.
 3. Oura developer app: registered yet? Needs an Oura account with an active membership for a Gen3+ ring.
 4. Repository rename: GitHub still shows `3ffeisullin/tinyml` with default branch `master`.
+5. Docker Desktop is not installed on the laptop, and the hub (Phase C, REQ-HUB-01) needs it. Install it on the laptop, or run the hub on the Raspberry Pi?
 
 ## 5. Next tasks (in order)
 
 | # | Task | Who | Requirement |
 |---|---|---|---|
-| 1 | Check out PR #1's branch, install requirements, run `pytest`, run the Sleep-EDF baseline (20 subjects), commit `reports/` to the branch | Claude Code | REQ-ML-01/02 |
-| 2 | Fill in §3 (environment) | Claude Code | — |
+| 1 | ~~Check out PR #1's branch, install requirements, run `pytest`, run the Sleep-EDF baseline (20 subjects), commit `reports/` to the branch~~ Done 2026-11-16 | Claude Code | REQ-ML-01/02 |
+| 2 | ~~Fill in §3 (environment)~~ Done 2026-11-16 | Claude Code | — |
 | 3 | Merge PR #1 once tests and baseline are in | Farid | — |
 | 4 | Train the first sleep model on device features, quantise to int8, write the conversion report | Claude Code or cloud | REQ-ML-03/04 |
 | 5 | Oura app skeleton in `hub/oura_app/`, sandbox first | Claude Code | REQ-OURA-01..07 |
@@ -75,6 +77,10 @@ Code: confirm each line, fix anything wrong, fill the blanks, and note the date.
 ## 6. Handoff log
 
 Newest first. One line per change: date, who, what, where.
+
+- 2026-11-16 · Claude Code (laptop) · Sleep-EDF baseline run (REQ-ML-01/02): 20 subjects, 20,626 epochs, 5-fold leave-subjects-out random forest. Device pipeline accuracy 0.774 / macro F1 0.680 vs MNE-tutorial features 0.729 / 0.621 → REQ-ML-02 **PASS**. N1 recall is weak (0.20). Report in `reports/`. Notion mirror updated.
+- 2026-11-16 · Claude Code (laptop) · Fixed two bugs found while running the baseline. `eegml/sleep_edf.py` looked up channel `EEG Fpz-Cz`, but MNE's `infer_types=True` renames it `Fpz-Cz`, so every subject was skipped. `scripts/sleep_edf_baseline.py` crashed when no subject loaded; it now exits 1 with "no subjects loaded". Regenerated test vectors differ from the cloud copies only by ~1e-11 float noise, so they were not re-committed. 30 tests pass.
+- 2026-11-16 · Claude Code (laptop) · Blocker cleared: AVG Web Shield HTTPS scanning broke PhysioNet downloads (`CERTIFICATE_VERIFY_FAILED`). Farid added Web Shield exclusions for `physionet.org`, `api.ouraring.com` and `cloud.ouraring.com`. §3 environment table filled in (repo path, pytest 9.2.0, Docker not installed).
 
 - 2026-11-16 · cloud · Coordination set up: this file, `CLAUDE.md`, README status section, Notion mirror page. Branch `feature/requirements-and-reference-features`.
 - 2026-11-16 · cloud · PR #1 opened: requirements, `eegml` reference features, Sleep-EDF baseline script, test vectors, 30 tests (pass in the cloud). Baseline not run (PhysioNet blocked in the cloud).

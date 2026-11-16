@@ -83,7 +83,9 @@ def load_subject(subject: int, recording: int = 1, channel: str = "EEG Fpz-Cz"):
                               preload=True, verbose=False)
     ann = mne.read_annotations(hyp)
     raw.set_annotations(ann, emit_warning=False)
-    x = raw.get_data(picks=[channel])[0] * 1e6
+    # infer_types=True strips the type prefix ("EEG Fpz-Cz" -> "Fpz-Cz")
+    name = channel if channel in raw.ch_names else channel.split(" ", 1)[-1]
+    x = raw.get_data(picks=[name])[0] * 1e6
     t0 = raw.first_time
     anns = [{"onset": a["onset"] - t0, "duration": a["duration"], "description": a["description"]}
             for a in raw.annotations]

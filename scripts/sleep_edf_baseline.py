@@ -45,6 +45,8 @@ def collect(subjects, cache: Path):
             continue
         X1.append(d["ours"]); X2.append(d["mne"]); Y.append(d["y"]); G.append(np.full(len(d["y"]), s))
         print(f"  subject {s}: {len(d['y'])} epochs")
+    if not Y:
+        sys.exit("Error: no subjects loaded (all downloads/loads failed; see messages above). No report written.")
     return np.vstack(X1), np.vstack(X2), np.concatenate(Y), np.concatenate(G)
 
 
