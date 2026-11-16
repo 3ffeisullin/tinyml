@@ -16,7 +16,8 @@ use most are the **Testing panel** and **Run Task**, both covered below.
 If your antivirus scans HTTPS (AVG does), downloads from Python can fail with
 `CERTIFICATE_VERIFY_FAILED`. Add these as exceptions (in AVG: Settings →
 General → Exceptions, entered as `https://<host>/*`): `physionet.org`,
-`api.ouraring.com`, `cloud.ouraring.com`.
+`api.ouraring.com`, `cloud.ouraring.com`. If a host still fails, also try Settings →
+Protection → Core Shields → Web Shield → Exclusions (that was needed earlier for other tools).
 
 ## 2. Get the code
 
@@ -35,7 +36,12 @@ py -3.12 -m venv venv
 
 1. **File → Open Folder…** and pick the `tinyml` folder (the repo itself, not its parent).
 2. Click **Install** when VS Code offers the recommended extensions (Python, Jupyter, C/C++, GitHub Pull Requests, Claude Code).
-3. Check the bottom-right status bar shows **Python 3.12 ('venv')**. If not: Ctrl+Shift+P → "Python: Select Interpreter" → the one in `venv`.
+3. Check the bottom-right status bar shows **venv (3.12.x)**. On first open VS Code may warn
+   **"An Invalid Python interpreter is selected"**. To fix it: Ctrl+Shift+P → **Python: Select Interpreter**
+   → **Enter interpreter path…** → `C:\Users\<you>\tinyml\venv\Scripts\python.exe` (the `venv` folder
+   inside your clone).
+   **Careful:** don't click the warning itself. It can lead into a **"Create Environment"** prompt, which
+   would make a second, empty `.venv` folder. If that prompt appears, press **Esc** to cancel it.
 
 ## 4. Everyday use
 

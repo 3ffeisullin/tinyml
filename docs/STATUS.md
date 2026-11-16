@@ -1,6 +1,6 @@
 # Project status and handoff log
 
-Last updated: 2026-11-16 by Claude (cloud session)
+Last updated: 2026-11-16 by Claude Code (laptop)
 
 This file is the shared state between the two places work happens. Read it
 before starting, and update it before you stop.
@@ -32,7 +32,7 @@ before starting, and update it before you stop.
 | C | Oura app (OAuth2, nightly pull, sandbox) | Not started; must run on the laptop | `hub/` (to come) |
 | C | Hub stack (Mosquitto, ingest, InfluxDB, Grafana) | Not started | `hub/` (to come) |
 | D | Overnight recording with Oura | Not started | — |
-| Team | VS Code workspace (extensions, tests, Run Tasks) and onboarding guide | In review | PR #2, `.vscode/`, `docs/getting-started.md` |
+| Team | VS Code workspace (extensions, tests, Run Tasks) and onboarding guide | In review; verified on the laptop 2026-11-16 (32 tests in the Testing panel and the run-all-tests task) | PR #2, `.vscode/`, `docs/getting-started.md` |
 
 ## 3. Laptop runtime environment
 
@@ -54,8 +54,9 @@ Code: confirm each line, fix anything wrong, fill the blanks, and note the date.
 | Docker Desktop (for the hub) | **Not installed yet**; Farid decided to install it on this laptop (no `docker` command, no install folder, no winget entry as of 2026-11-16) | 2026-11-16 |
 | Docker prerequisites | WSL 2 present and default; hardware virtualization enabled; RAM 13.9 GB (Docker minimum 4 GB) | 2026-11-16 |
 | Disk space | C: 251.8 GB free of 474.7 GB. Estimated Docker need ~10–15 GB: Desktop ~2–3 GB, WSL 2 VM disk ~1–2 GB to start, hub images ~2–3 GB, InfluxDB data tens of MB, ~5 GB headroom. The VM disk grows without shrinking; reclaim with `docker system prune`. | 2026-11-16 |
+| VS Code | 1.146.0 at `%LOCALAPPDATA%\Programs\Microsoft VS Code`; all recommended extensions installed (Python 2026.10.0, Pylance, Jupyter, C/C++, GitHub PRs, Claude Code, plus Python Environments). On first open the interpreter had to be set by hand: Python: Select Interpreter → Enter interpreter path → `C:\Users\ffeis\tinyml\venv\Scripts\python.exe`; the status bar then shows "venv (3.12.10)". | 2026-11-16 |
 | Sleep-EDF cache | `%USERPROFILE%\mne_data\physionet-sleep-data` (MNE default; 20 nights, ~1 GB); per-subject features in `data\cache\sleep_edf\` (git-ignored) | 2026-11-16 |
-| AVG antivirus HTTPS scanning | AVG Web Shield re-signs HTTPS, which breaks Python/MNE downloads (`CERTIFICATE_VERIFY_FAILED`). Fix: on this laptop's AVG version, Settings → General → Exceptions → Add exception, entered as `https://<host>/*` (other AVG versions put it under Core Shields → Web Shield → Exclusions). Excluded so far: `physionet.org`, `api.ouraring.com`, `cloud.ouraring.com`. Check with `openssl s_client -connect <host>:443 -servername <host>`; the issuer must not be AVG. | 2026-11-16 |
+| AVG antivirus HTTPS scanning | AVG Web Shield re-signs HTTPS, which breaks Python/MNE downloads (`CERTIFICATE_VERIFY_FAILED`). Fix: on this laptop's AVG version, Settings → General → Exceptions → Add exception, entered as `https://<host>/*` (other AVG versions put it under Core Shields → Web Shield → Exclusions). Excluded so far: `physionet.org`, `api.ouraring.com`, `cloud.ouraring.com`. Check with `openssl s_client -connect <host>:443 -servername <host>`; the issuer must not be AVG. If a host still fails, also try Core Shields → Web Shield → Exclusions (needed earlier for winget/tunnel). | 2026-11-16 |
 
 ## 4. Open questions for Farid
 
@@ -72,7 +73,7 @@ Code: confirm each line, fix anything wrong, fill the blanks, and note the date.
 | 1 | ~~Check out PR #1's branch, install requirements, run `pytest`, run the Sleep-EDF baseline (20 subjects), commit `reports/` to the branch~~ Done 2026-11-16 | Claude Code | REQ-ML-01/02 |
 | 2 | ~~Fill in §3 (environment)~~ Done 2026-11-16 | Claude Code | — |
 | 3 | Merge PR #1 (tests and baseline are in), then PR #2 | Farid | — |
-| 3a | Run the new real-data test on the laptop: `python -m pytest tests/test_sleep_edf_real.py` should pass, not skip | Claude Code | REQ-ML-01 |
+| 3a | ~~Run the new real-data test on the laptop: `python -m pytest tests/test_sleep_edf_real.py` should pass, not skip~~ Done 2026-11-16: passes | Claude Code | REQ-ML-01 |
 | 4 | Train the first sleep model on device features, quantise to int8, write the conversion report | Claude Code or cloud | REQ-ML-03/04 |
 | 5 | Oura app skeleton in `hub/oura_app/`, sandbox first | Claude Code | REQ-OURA-01..07 |
 | 6 | Firmware `eeg_node`: parity test on the board using `firmware/test_vectors/` before any hardware is wired | Claude Code | REQ-FEAT-09 |
@@ -81,6 +82,8 @@ Code: confirm each line, fix anything wrong, fill the blanks, and note the date.
 ## 6. Handoff log
 
 Newest first. One line per change: date, who, what, where.
+
+- 2026-11-16 · Claude Code (laptop) · PR #2 verified on the laptop: `python -m pytest` 32 passed; `tests/test_sleep_edf_real.py` passes, not skipped (subject 0 → 841 epochs). Farid checked VS Code: Testing panel 32/32 green, and the "Python: run all tests" task ends with 32 passed. On first open VS Code reported "An Invalid Python interpreter is selected"; fixed via Enter interpreter path to the repo venv. Clicking the warning leads to "Create Environment"; cancel it with Esc (no `.venv` was created). That fix is now in `docs/getting-started.md` step 3. AVG: the General → Exceptions path (`https://<host>/*`) is what worked for physionet.org; Web Shield exclusions are kept as a fallback in §3 and the guide. Notion mirror updated.
 
 - 2026-11-16 · cloud · PR #2 (stacked on PR #1): VS Code workspace (`.vscode/` recommended extensions, venv + pytest settings, Run Tasks for tests, vectors, baseline, firmware compile/upload/monitor) and `docs/getting-started.md` for new team members. Loader hardening after the channel-name bug: missing channel now raises with the available names instead of being skipped; only download errors skip a subject; EDF header warnings silenced; progress lines flush. New `tests/test_sleep_edf_real.py` runs on a cached real night (expects 841 epochs for subject 0) and skips elsewhere. Corrected the AVG exceptions path in §3. Design docs updated with the new band edges and the baseline result.
 - 2026-11-16 · Claude Code (laptop) · Decision: the hub's Docker stack will run on the laptop; Farid is installing Docker Desktop. §3 now records disk (251.8 GB free on C:, ~10–15 GB needed), RAM and WSL 2 / virtualization readiness. If the installer or Docker Hub pulls fail with certificate errors, add those hostnames to AVG's Web Shield exclusions.
