@@ -50,7 +50,9 @@ Code: confirm each line, fix anything wrong, fill the blanks, and note the date.
 | Board FQBN | `esp32:esp32:XIAO_ESP32S3` | 2026-11-05 |
 | XIAO serial port | COM5 with a data cable (COM4 is a Bluetooth port; charge-only cables were the cause of earlier upload failures) | EECS 635 labs |
 | Separate course setup (don't mix) | EECS 635 labs use PlatformIO (`C:\Users\ffeis\.platformio\penv\Scripts\pio.exe`, espressif32@6.8.0 → Arduino core 2.0.17) and a Lab 4 venv `l4-kws-local` (Python 3.12, TF 2.19.1) | EECS 635 labs |
-| Docker Desktop (for the hub) | **Not installed** (no `docker` command, no install folder, no winget entry) | 2026-11-16 |
+| Docker Desktop (for the hub) | **Not installed yet**; Farid decided to install it on this laptop (no `docker` command, no install folder, no winget entry as of 2026-11-16) | 2026-11-16 |
+| Docker prerequisites | WSL 2 present and default; hardware virtualization enabled; RAM 13.9 GB (Docker minimum 4 GB) | 2026-11-16 |
+| Disk space | C: 251.8 GB free of 474.7 GB. Estimated Docker need ~10–15 GB: Desktop ~2–3 GB, WSL 2 VM disk ~1–2 GB to start, hub images ~2–3 GB, InfluxDB data tens of MB, ~5 GB headroom. The VM disk grows without shrinking; reclaim with `docker system prune`. | 2026-11-16 |
 | Sleep-EDF cache | `%USERPROFILE%\mne_data\physionet-sleep-data` (MNE default; 20 nights, ~1 GB); per-subject features in `data\cache\sleep_edf\` (git-ignored) | 2026-11-16 |
 | AVG antivirus HTTPS scanning | AVG Web Shield re-signs HTTPS, which breaks Python/MNE downloads (`CERTIFICATE_VERIFY_FAILED`). Fix: add the bare hostname under Settings → Protection → Core Shields → Web Shield → Exclusions. Excluded so far: `physionet.org`, `api.ouraring.com`, `cloud.ouraring.com`. Check with `openssl s_client -connect <host>:443 -servername <host>`; the issuer must not be AVG. | 2026-11-16 |
 
@@ -60,7 +62,7 @@ Code: confirm each line, fix anything wrong, fill the blanks, and note the date.
 2. Have the front-end parts been ordered, and when do they arrive? The funding deck assumed a demo on Fri 2026-11-20.
 3. Oura developer app: registered yet? Needs an Oura account with an active membership for a Gen3+ ring.
 4. Repository rename: GitHub still shows `3ffeisullin/tinyml` with default branch `master`.
-5. Docker Desktop is not installed on the laptop, and the hub (Phase C, REQ-HUB-01) needs it. Install it on the laptop, or run the hub on the Raspberry Pi?
+5. ~~Docker Desktop is not installed on the laptop, and the hub (Phase C, REQ-HUB-01) needs it. Install it on the laptop, or run the hub on the Raspberry Pi?~~ Decided 2026-11-16: install Docker Desktop on the laptop.
 
 ## 5. Next tasks (in order)
 
@@ -77,6 +79,8 @@ Code: confirm each line, fix anything wrong, fill the blanks, and note the date.
 ## 6. Handoff log
 
 Newest first. One line per change: date, who, what, where.
+
+- 2026-11-16 · Claude Code (laptop) · Decision: the hub's Docker stack will run on the laptop; Farid is installing Docker Desktop. §3 now records disk (251.8 GB free on C:, ~10–15 GB needed), RAM and WSL 2 / virtualization readiness. If the installer or Docker Hub pulls fail with certificate errors, add those hostnames to AVG's Web Shield exclusions.
 
 - 2026-11-16 · Claude Code (laptop) · Sleep-EDF baseline run (REQ-ML-01/02): 20 subjects, 20,626 epochs, 5-fold leave-subjects-out random forest. Device pipeline accuracy 0.774 / macro F1 0.680 vs MNE-tutorial features 0.729 / 0.621 → REQ-ML-02 **PASS**. N1 recall is weak (0.20). Report in `reports/`. Notion mirror updated.
 - 2026-11-16 · Claude Code (laptop) · Fixed two bugs found while running the baseline. `eegml/sleep_edf.py` looked up channel `EEG Fpz-Cz`, but MNE's `infer_types=True` renames it `Fpz-Cz`, so every subject was skipped. `scripts/sleep_edf_baseline.py` crashed when no subject loaded; it now exits 1 with "no subjects loaded". Regenerated test vectors differ from the cloud copies only by ~1e-11 float noise, so they were not re-committed. 30 tests pass.
