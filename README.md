@@ -3,6 +3,9 @@
 Train an EEG pattern-recognition model on the PC, quantize it to INT8 TFLite, and run it on a
 Seeed XIAO ESP32-S3 with TensorFlow Lite Micro. (Qualcomm/Snapdragon work is a separate project.)
 
+> Hobby/research project: it makes no medical or diagnostic claims (REQ-SAFE-04). Where the sleep model and its
+> training data come from, in plain language: [`docs/model-provenance.md`](docs/model-provenance.md).
+
 ## Project status (2026-11-22)
 
 | Phase | State |
@@ -13,10 +16,10 @@ Seeed XIAO ESP32-S3 with TensorFlow Lite Micro. (Qualcomm/Snapdragon work is a s
 | A · Int8 sleep model | Done in draft PR #3: running standardisation as on the device, int8 macro F1 0.707 vs 0.680 for the random forest, float/int8 agreement 98.7 % (REQ-ML-03), 6.3 KB model |
 | A · Model on the XIAO | Done: outputs match Python 5/5, 224 µs per inference, 956-byte arena (REQ-ML-04) |
 | B · Firmware (`eeg_node`) | The whole chain runs on the board: on a replayed held-out night its stages match Python on 100 % of epochs (REQ-FEAT-06/09/10). Acquisition firmware ready and verified with a fake 250 Hz source (task 7a); wiring and bring-up next (`docs/bringup.md`); parts due around 2026-11-26; demo 2026-11-27 |
-| C · Oura app and hub | Not started; Oura app after the int8 model, hub needs Docker |
+| C · Oura app and hub | Oura app needed for the demo (2026-11-27), waiting on the Oura developer app registration; hub needs Docker (after the demo) |
 | D · Overnight recording | Not started |
 
-Latest work: [`docs/briefs/2026-11-22-acquisition.md`](docs/briefs/2026-11-22-acquisition.md), wiring-day checklist [`docs/bringup.md`](docs/bringup.md), [`docs/briefs/2026-11-21-end-to-end-replay.md`](docs/briefs/2026-11-21-end-to-end-replay.md), [`docs/briefs/2026-11-21-feature-parity.md`](docs/briefs/2026-11-21-feature-parity.md) and [`docs/briefs/2026-11-21-int8-sleep-model.md`](docs/briefs/2026-11-21-int8-sleep-model.md).
+Latest work: [`docs/briefs/2026-11-22-deck-update.md`](docs/briefs/2026-11-22-deck-update.md) (summary since 2026-11-21, demo plan), [`docs/briefs/2026-11-22-acquisition.md`](docs/briefs/2026-11-22-acquisition.md), wiring-day checklist [`docs/bringup.md`](docs/bringup.md), [`docs/briefs/2026-11-21-end-to-end-replay.md`](docs/briefs/2026-11-21-end-to-end-replay.md), [`docs/briefs/2026-11-21-feature-parity.md`](docs/briefs/2026-11-21-feature-parity.md) and [`docs/briefs/2026-11-21-int8-sleep-model.md`](docs/briefs/2026-11-21-int8-sleep-model.md).
 New to the project? Start with [`docs/getting-started.md`](docs/getting-started.md).
 Full state, the laptop environment, next tasks and the handoff log are in
 [`docs/STATUS.md`](docs/STATUS.md). Requirements are in

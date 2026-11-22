@@ -168,7 +168,9 @@ def main():
            "agreement_cv": float((p["float"] == p["int8"]).mean()),
            "folds_detail": fold_info,
            "final": {"train_epochs": n_ep, "agreement_train": final_agree, "tflite_bytes": len(tflite),
-                     "arena": arena, "header": str(a.header.relative_to(ROOT)).replace("\\", "/")},
+                     "arena": arena,
+                     "header": str(a.header.resolve().relative_to(ROOT) if a.header.resolve().is_relative_to(ROOT)
+                                   else a.header).replace("\\", "/")},
            "seconds": round(time.time() - t0, 1)}
     a.out.mkdir(parents=True, exist_ok=True)
     (a.out / "sleep_model.json").write_text(json.dumps(res, indent=2))

@@ -57,8 +57,12 @@ Requirement IDs refer to `docs/requirements.md`.
 
 ## 5. Test tone and gain calibration (REQ-HW-02 test 2, REQ-ACQ-01)
 
-- [ ] Feed a known 10 Hz sine of a few tens of µV into the Pill inputs (signal generator through a resistive
-      attenuator, e.g. 10 mV into 1000:1). Log 60 s.
+- [ ] **Bench only, no electrodes on a person:** the signal generator is usually mains-powered.
+- [ ] Target ≈ 100 µV peak-to-peak at 10 Hz at the Pill inputs (a strong alpha rhythm). Use a **signal generator**:
+      a phone tone app is unreliable here, because headphone outputs roll off below ~20 Hz.
+      Generator **100 mV p-p, 10 Hz sine** → **100 kΩ** in series → Pill input (+); **100 Ω** across the Pill inputs;
+      generator ground → Pill input (−) and reference. The divider is ≈ 1/1,000, giving ≈ 100 µV p-p (A ≈ 50 µV).
+      Trust the generator's display over a multimeter (many meters misread AC at 10 Hz). Log 60 s.
 - [ ] The alpha band (8.5–11.5 Hz) dominates. With this pipeline's normalisation, band power is mean square ×
       NFFT/2, so a sine of amplitude A gives P = 256 × A²/2 (checked: 20 µV → P ≈ 51,200, log10 ≈ 4.71).
       Measured amplitude **A = √(P / 128) µV**, with P = 10^(logp_alpha) from the `W` lines.

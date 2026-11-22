@@ -86,7 +86,7 @@ web page to connect the Oura account; data goes to InfluxDB and Grafana.
 | REQ-SAFE-01 | While electrodes are on a person, the wearable shall run from the LiPo only, with no connection to anything mains-powered. | All | Test procedure checklist | Open |
 | REQ-SAFE-02 | Firmware shall refuse to record while USB VBUS is present. | B | Plug USB during recording; recording stops | Open |
 | REQ-SAFE-03 | USB debugging with electrodes attached shall go through the USB isolator or a laptop running on battery. | B | Test procedure checklist | Open |
-| REQ-SAFE-04 | The device and app shall be labelled as hobby/research tools that make no diagnostic claims. | All | README and app footer | Open |
+| REQ-SAFE-04 | The device and app shall be labelled as hobby/research tools that make no diagnostic claims. | All | README and app footer | Partial (2026-11-22): README and `docs/model-provenance.md` carry the label; the app footer comes with the app |
 
 ## 7. Decisions recorded here
 
