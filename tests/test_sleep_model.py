@@ -122,3 +122,15 @@ def test_welford_in_float32_is_close_enough_for_the_device():
     z64 = sm.running_standardise(x)
     z32 = sm.running_standardise(x.astype(np.float32), dtype=np.float32)
     assert np.abs(z32 - z64).max() < 1e-3  # far below one int8 input step (~0.04)
+
+
+def test_replay_parses_board_lines():
+    import sys
+    sys.path.insert(0, str(HEADER.parents[2] / "scripts"))
+    import replay_night as rn
+    feats, windows = np.full((3, 30), np.nan), np.zeros(3, int)
+    out, names = np.zeros((3, 5), int), {}
+    rn.parse_line("FEAT 1 29 " + " ".join(["0.5"] * 30), feats, windows, out, names)
+    rn.parse_line("OUT 2 N2 -128 -100 90 -120 -128", feats, windows, out, names)
+    assert windows[1] == 29 and (feats[1] == 0.5).all() and np.isnan(feats[0]).all()
+    assert names[2] == "N2" and out[2].tolist() == [-128, -100, 90, -120, -128]

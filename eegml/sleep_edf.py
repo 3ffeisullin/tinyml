@@ -48,6 +48,34 @@ def mne_tutorial_features(x: np.ndarray, fs: float, onsets_s: np.ndarray, epoch_
     return np.stack([psd[:, (f >= lo) & (f < hi)].mean(-1) for lo, hi in MNE_TUTORIAL_BANDS], axis=1)
 
 
+def device_segment(x_uv: np.ndarray, fs_in: float, annotations, trim_wake_min: float = 30.0):
+    """The signal the device would record, and where the scored epochs sit in it.
+
+    Starts at the first kept epoch (so the filter settles in wake) and is resampled
+    to FS. Returns seg[n] (uV at FS), epoch offsets in samples of seg, labels, and
+    epoch onsets in seconds of the original recording.
+    """
+    onsets, y = scored_epochs(annotations, trim_wake_min)
+    keep = onsets + EPOCH_S <= len(x_uv) / fs_in
+    onsets, y = onsets[keep], y[keep]
+    if not len(onsets):
+        return np.empty(0), np.empty(0, dtype=int), y, onsets
+    start = int(onsets.min() * fs_in)
+    seg = x_uv[start:int(np.ceil((onsets.max() + EPOCH_S) * fs_in))]
+    r = Fraction(FS / fs_in).limit_denominator(100)
+    seg250 = signal.resample_poly(seg, r.numerator, r.denominator)
+    offsets = np.round((onsets - start / fs_in) * FS).astype(int)
+    return seg250, offsets, y, onsets
+
+
+def device_epoch_features(seg: np.ndarray, offsets: np.ndarray, line_freq: float = 50.0) -> np.ndarray:
+    """Device feature pipeline on a recorded segment: filters, windows, 30 s epoch summaries."""
+    filt = filters.apply(seg, FilterSpec(line_freq=line_freq))
+    starts, wf = sliding_features(filt, seg, line_freq=line_freq)
+    ours, _ = epoch_features(starts, wf, offsets)
+    return ours
+
+
 def subject_features(x_uv: np.ndarray, fs_in: float, annotations, line_freq: float = 50.0,
                      trim_wake_min: float = 30.0):
     """Device features and MNE-tutorial features for one recording.
@@ -56,19 +84,10 @@ def subject_features(x_uv: np.ndarray, fs_in: float, annotations, line_freq: flo
     dicts with onset (s from the first sample), duration and description.
     Returns ours[n, k], mne[n, 5], labels[n].
     """
-    onsets, y = scored_epochs(annotations, trim_wake_min)
-    keep = onsets + EPOCH_S <= len(x_uv) / fs_in
-    onsets, y = onsets[keep], y[keep]
+    seg250, offsets, y, onsets = device_segment(x_uv, fs_in, annotations, trim_wake_min)
     if not len(onsets):
         return np.empty((0, 0)), np.empty((0, 5)), y
-    # Device path: start at the first kept epoch so the filter settles in wake.
-    start = int(onsets.min() * fs_in)
-    seg = x_uv[start:int(np.ceil((onsets.max() + EPOCH_S) * fs_in))]
-    r = Fraction(FS / fs_in).limit_denominator(100)
-    seg250 = signal.resample_poly(seg, r.numerator, r.denominator)
-    filt = filters.apply(seg250, FilterSpec(line_freq=line_freq))
-    starts, wf = sliding_features(filt, seg250, line_freq=line_freq)
-    ours, counts = epoch_features(starts, wf, np.round((onsets - start / fs_in) * FS).astype(int))
+    ours = device_epoch_features(seg250, offsets, line_freq)
     theirs = mne_tutorial_features(x_uv, fs_in, onsets)
     ok = ~np.isnan(ours).any(1)
     return ours[ok], theirs[ok], y[ok]

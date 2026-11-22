@@ -8,10 +8,21 @@
 //    board's own filter output (the whole chain).
 // 2. Sleep-model bench (task 4b, REQ-ML-04, REQ-ML-06): the int8 model from sleep_model.h on
 //    its embedded test epochs: parity with Python, microseconds per inference, arena used.
-// No sensor or electrodes are needed. Acquisition joins in task 7.
+// 3. Replay (task 6b): the laptop (scripts/replay_night.py) streams a recorded night, one 30 s
+//    epoch at a time, and the board runs the whole chain on it: filters -> window features ->
+//    epoch summaries -> running standardisation -> [t, t-1, t-2] -> int8 model -> stage.
+//    Serial protocol (115200 baud is ignored by USB CDC), one command per line:
+//      BEGIN <mains Hz>        start a session (50 for Sleep-EDF)  -> "OK BEGIN"
+//      EPOCH + 7500 float32 LE raw samples (uV), sent in 4096-byte chunks, each answered
+//                              with "C" (flow control)              -> "FEAT e f0..f29",
+//                              any "OUT t stage q0..q4" now ready, then "ACK e <us>"
+//      END                     flush a session shorter than the warm-up -> "DONE <epochs>"
+//      TEST                    re-run checks 1 and 2
+// Self-tests run at boot and end with "READY". No sensor or electrodes are needed.
 #include <Chirale_TensorFlowLite.h>
 #include "eeg_config.h"
 #include "eeg_features.h"
+#include "eeg_pipeline.h"
 #include "feature_vectors_v1.h"
 #include "sleep_model.h"
 #include "tensorflow/lite/micro/micro_interpreter.h"
@@ -179,19 +190,85 @@ void features_summary(bool verbose) {
                 (unsigned long)r.us_sample, (unsigned long)r.us_window);
 }
 
-void setup() {
-  Serial.begin(115200);
-  delay(2000);
-  Serial.println("\n=== eeg_node: feature parity + sleep-model bench ===");
+// ---------------- replay ----------------
+eeg::EpochFeatures epoch_features(&features);
+eeg::ModelInput model_input;
+float replay_buf[EEG_EPOCH];
+
+void run_model(long t, const float* in) {
+  for (int i = 0; i < SLEEP_MODEL_N_INPUT; i++)
+    input->data.int8[i] = eeg::quantise_input(in[i], input->params.scale, input->params.zero_point);
+  if (interpreter->Invoke() != kTfLiteOk) { Serial.printf("ERR invoke %ld\n", t); return; }
+  const int8_t* q = output->data.int8;
+  Serial.printf("OUT %ld %s %d %d %d %d %d\n", t, SLEEP_MODEL_STAGES[argmax(q, SLEEP_MODEL_N_CLASSES)],
+                q[0], q[1], q[2], q[3], q[4]);
+}
+
+// The USB CDC receive buffer (8 KB) drops data when the host sends faster than it is read, so the
+// host sends 4 KB chunks and waits for "C" after each (found in task 6b: 30 KB at once lost bytes).
+constexpr size_t kChunk = 4096;
+
+void replay_epoch() {
+  const size_t want = sizeof replay_buf;
+  uint8_t* dst = (uint8_t*)replay_buf;
+  size_t got = 0;
+  while (got < want) {
+    const size_t n = min(kChunk, want - got);
+    const size_t r = Serial.readBytes(dst + got, n);
+    got += r;
+    if (r != n) { Serial.printf("ERR short epoch %u/%u bytes\n", (unsigned)got, (unsigned)want); return; }
+    Serial.println("C");
+  }
+  const uint32_t t0 = micros();
+  float f[eeg::kEpochFeatures];
+  bool done = false;
+  for (int n = 0; n < EEG_EPOCH; n++) done |= epoch_features.push(replay_buf[n], f);
+  const long e = epoch_features.epochs() - 1;
+  if (!done) { Serial.println("ERR epoch did not complete"); return; }
+  Serial.printf("FEAT %ld %d", e, epoch_features.last_window_count());
+  for (int i = 0; i < eeg::kEpochFeatures; i++) Serial.printf(" %.9g", f[i]);
+  Serial.println();
+  model_input.push(f, run_model);
+  Serial.printf("ACK %ld %lu\n", e, (unsigned long)(micros() - t0));
+}
+
+void self_tests() {
   Serial.printf("Vectors v%d: %d samples, %d windows x %d features\n", TV_VERSION, TV_N_SAMPLES,
                 TV_N_WINDOWS, TV_N_FEATURES);
   features_summary(true);
-  model_setup();
   model_bench(true);
 }
 
+void setup() {
+  Serial.setRxBufferSize(8192);
+  Serial.begin(115200);
+  Serial.setTimeout(10000);
+  delay(2000);
+  Serial.println("\n=== eeg_node: feature parity + sleep-model bench + replay ===");
+  model_setup();
+  self_tests();
+  Serial.println("READY");
+}
+
 void loop() {
-  delay(5000);
-  features_summary(false);
-  model_bench(false);
+  if (!Serial.available()) { delay(1); return; }
+  String cmd = Serial.readStringUntil('\n');
+  cmd.trim();
+  if (cmd == "EPOCH") {
+    replay_epoch();
+  } else if (cmd.startsWith("BEGIN")) {
+    const float line = cmd.length() > 6 ? cmd.substring(6).toFloat() : 60.0f;
+    if (line == 50.0f) epoch_features.begin(EEG_SOS_50, EEG_N_SOS_50, 50.0f);
+    else epoch_features.begin(EEG_SOS_60, EEG_N_SOS_60, 60.0f);
+    model_input.reset();
+    Serial.printf("OK BEGIN %g\n", line == 50.0f ? 50.0f : 60.0f);
+  } else if (cmd == "END") {
+    model_input.finish(run_model);
+    Serial.printf("DONE %ld\n", epoch_features.epochs());
+  } else if (cmd == "TEST") {
+    self_tests();
+    Serial.println("READY");
+  } else if (cmd.length()) {
+    Serial.printf("ERR unknown command '%s'\n", cmd.c_str());
+  }
 }
