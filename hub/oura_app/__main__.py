@@ -4,6 +4,7 @@
     .\\venv\\Scripts\\python.exe -m hub.oura_app pull --days 30   # first time; nightly runs use the default 3 days
     .\\venv\\Scripts\\python.exe -m hub.oura_app nights           # table of stored nights
     .\\venv\\Scripts\\python.exe -m hub.oura_app status           # signed in? token expiry? stored nights?
+    .\\venv\\Scripts\\python.exe -m hub.oura_app check            # does Oura accept the client ID/secret in .env?
     .\\venv\\Scripts\\python.exe -m hub.oura_app logout           # revoke and delete the tokens
 Add --sandbox (before the command) to use Oura's sandbox data instead of the ring's (REQ-OURA-06).
 """
@@ -14,7 +15,7 @@ from datetime import datetime, timezone
 
 from . import auth
 from .client import OuraClient
-from .config import DATA_DIR, REPULL_DAYS, REVOKE_URL, USER_AGENT, ConfigError, load_settings
+from .config import DATA_DIR, REPULL_DAYS, REVOKE_URL, TOKEN_URL, USER_AGENT, ConfigError, load_settings
 from .data import LocalStore, night_summary
 from .pull import pull
 from .tokens import KeyringStore
@@ -42,7 +43,7 @@ def main(argv=None):
     pl = sub.add_parser("pull"); pl.add_argument("--days", type=int, default=REPULL_DAYS)
     pl.add_argument("--no-heartrate", action="store_true")
     nt = sub.add_parser("nights"); nt.add_argument("--all", action="store_true", help="include naps and rests")
-    sub.add_parser("status"); sub.add_parser("logout")
+    sub.add_parser("status"); sub.add_parser("logout"); sub.add_parser("check", help="test the client ID/secret")
     a = ap.parse_args(argv)
 
     store = KeyringStore()
@@ -64,6 +65,21 @@ def main(argv=None):
         s = load_settings()
         import requests
         http = requests.Session()
+        if a.cmd == "check":
+            # A refresh with a dummy token: Oura answers invalid_client if the ID/secret pair is wrong,
+            # invalid_grant if the pair is right (the dummy token is, of course, rejected).
+            r = http.post(TOKEN_URL, data={"grant_type": "refresh_token", "refresh_token": "dummy",
+                                           "client_id": s.client_id, "client_secret": s.client_secret},
+                          headers={"User-Agent": USER_AGENT}, timeout=30)
+            try:
+                err = r.json().get("error", "")
+            except ValueError:
+                err = ""
+            if err == "invalid_client":
+                print("Client ID/secret rejected by Oura: re-copy the secret into .env.")
+                return 1
+            print(f"Client ID and secret accepted by Oura (HTTP {r.status_code} {err} for the dummy token is expected).")
+            return 0
         if a.cmd == "login":
             auth.login(http, s, store, open_browser=not a.no_browser, timeout=a.timeout)
             print("Signed in. Tokens saved in Windows Credential Manager (tinyml-oura).")
