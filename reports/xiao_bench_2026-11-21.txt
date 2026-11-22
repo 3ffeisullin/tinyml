@@ -1,0 +1,13 @@
+# XIAO ESP32-S3 bench log, task 4b (REQ-ML-04), 2026-11-21
+# Sketch firmware/eeg_node/eeg_node.ino, model v2 (per-tensor int8), Chirale_TensorFlowLite 2.0.0,
+# ESP32 core 3.3.12, COM5, USB from the laptop, no electrodes. First boot cycle, captured by pyserial.
+=== eeg_node: sleep-model bench ===
+Model v2, feature schema 1, input 90, arena 7168 bytes
+in scale 0.0417459 zp -17, out scale 0.00390625 zp -128
+Model 6336 bytes, arena used 956 / 7168 bytes
+true W   -> predicted W    output matches Python  224 us/inference
+true N1  -> predicted N1   output matches Python  221 us/inference
+true N2  -> predicted N2   output matches Python  223 us/inference
+true N3  -> predicted N2   output matches Python  221 us/inference
+true REM -> predicted REM  output matches Python  223 us/inference
+SUMMARY parity 5/5, worst 224 us/inference, arena used 956 bytes

@@ -123,7 +123,19 @@ def to_int8(model, representative: np.ndarray) -> bytes:
     conv.target_spec.supported_ops = [tf.lite.OpsSet.TFLITE_BUILTINS_INT8]
     conv.inference_input_type = tf.int8
     conv.inference_output_type = tf.int8
+    # The Arduino TFLM build (Chirale_TensorFlowLite 2.0.0) computes one output
+    # multiplier per FULLY_CONNECTED layer, so per-channel dense weights (the TF
+    # 2.21 default) give wrong outputs on the XIAO. Found in task 4b, 2026-11-21.
+    conv._experimental_disable_per_channel_quantization_for_dense_layers = True
     return conv.convert()
+
+
+def per_channel_tensors(tflite: bytes) -> list:
+    """Names of tensors with more than one quantisation scale (must be empty for the XIAO)."""
+    import tensorflow as tf
+    it = tf.lite.Interpreter(model_content=tflite)
+    return [d["name"] for d in it.get_tensor_details() if len(d["quantization_parameters"]["scales"]) > 1
+            and d["dtype"] == np.int8]
 
 
 class Int8Runner:

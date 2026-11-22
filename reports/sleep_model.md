@@ -15,16 +15,16 @@ from each fold's training subjects only.
 | Model | Accuracy | Macro F1 | Recall W | Recall N1 | Recall N2 | Recall N3 | Recall REM |
 |---|---|---|---|---|---|---|---|
 | Dense net, float | 0.769 | 0.708 | 0.77 | 0.44 | 0.78 | 0.81 | 0.82 |
-| Dense net, int8 | 0.769 | 0.707 | 0.78 | 0.43 | 0.78 | 0.80 | 0.81 |
+| Dense net, int8 | 0.768 | 0.707 | 0.78 | 0.43 | 0.78 | 0.80 | 0.81 |
 | Random forest, baseline (raw features) | 0.774 | 0.680 | 0.84 | 0.20 | 0.85 | 0.83 | 0.68 |
 | Random forest, same input as the net | 0.785 | 0.697 | 0.82 | 0.22 | 0.85 | 0.71 | 0.83 |
 
-Float/int8 agreement on held-out epochs: **98.72%** (REQ-ML-03 needs ≥ 98 %:
+Float/int8 agreement on held-out epochs: **98.68%** (REQ-ML-03 needs ≥ 98 %:
 **PASS**).
 
 Int8 model vs baseline random forest, macro F1: 0.707 vs
 0.680 → **beats the random forest**
-(accuracy 0.769 vs 0.774). A random forest given the
+(accuracy 0.768 vs 0.774). A random forest given the
 net's own input reaches macro F1 0.697; per-subject standardisation and the
 previous-epoch context account for much of the gain, and the net is the model small enough for the XIAO.
 
@@ -32,21 +32,21 @@ previous-epoch context account for much of the gain, and the net is the model sm
 
 | true \ pred | W | N1 | N2 | N3 | REM |
 |---|---|---|---|---|---|
-| W | 2695 | 306 | 226 | 84 | 138 |
-| N1 | 264 | 535 | 195 | 8 | 238 |
-| N2 | 508 | 374 | 7192 | 668 | 458 |
-| N3 | 100 | 5 | 483 | 2388 | 5 |
-| REM | 178 | 279 | 251 | 0 | 3048 |
+| W | 2692 | 311 | 227 | 81 | 138 |
+| N1 | 266 | 538 | 192 | 7 | 237 |
+| N2 | 508 | 376 | 7187 | 671 | 458 |
+| N3 | 102 | 5 | 482 | 2387 | 5 |
+| REM | 183 | 278 | 248 | 0 | 3047 |
 
 ### Per fold
 
 | Fold | Test subjects | Best epoch | Float accuracy | Float/int8 agreement |
 |---|---|---|---|---|
-| 0 | 2, 5, 15, 19 | 23 | 0.814 | 0.9890 |
-| 1 | 4, 6, 13, 18 | 33 | 0.776 | 0.9840 |
-| 2 | 3, 12, 14, 16 | 5 | 0.768 | 0.9863 |
-| 3 | 1, 7, 8, 11 | 14 | 0.713 | 0.9874 |
-| 4 | 0, 9, 10, 17 | 19 | 0.774 | 0.9890 |
+| 0 | 2, 5, 15, 19 | 23 | 0.814 | 0.9880 |
+| 1 | 4, 6, 13, 18 | 33 | 0.776 | 0.9865 |
+| 2 | 3, 12, 14, 16 | 5 | 0.768 | 0.9880 |
+| 3 | 1, 7, 8, 11 | 14 | 0.713 | 0.9855 |
+| 4 | 0, 9, 10, 17 | 19 | 0.774 | 0.9860 |
 
 ## Deployed model (`firmware/eeg_node/sleep_model.h`)
 
@@ -55,7 +55,7 @@ points); float/int8 agreement on its training data 98.92%.
 
 | Item | Value | REQ-ML-04 limit |
 |---|---|---|
-| `.tflite` size | 7,536 bytes | 65,536 bytes flash |
+| `.tflite` size | 6,336 bytes | 65,536 bytes flash |
 | Activations (sum of non-constant tensors) | 148 bytes | — |
 | Arena estimate (11 tensors, 5 ops, with bookkeeping) | 3,156 bytes | — |
 | Arena to allocate (2× estimate, ≥ 4 KB) | 7,168 bytes | 32,768 bytes |

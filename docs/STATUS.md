@@ -1,19 +1,19 @@
 # Project status and handoff log
 
-Last updated: 2026-11-21 by Claude Code (laptop)
+Last updated: 2026-11-21 (evening) by Claude Code (laptop)
 
 This file is the shared state between the two places work happens. Read it
 before starting, and update it before you stop.
 
 ## 0. Resume here
 
-- **master** is at `309a1bf` (PRs #1 and #2 merged 2026-11-16). 32 tests pass on the laptop.
-- **Active branch:** `feature/int8-sleep-model` (draft PR #3). Task 4 is done on it (2026-11-21); 39 tests pass.
-- **Read first:** `docs/briefs/2026-11-21-int8-sleep-model.md` (results, insights, decisions, next steps; addendum for task 4a).
-- **Done 2026-11-21:** task 4 and task 4a (running standardisation, Farid approved). The model in `firmware/eeg_node/sleep_model.h` is now the device-realistic v2. 42 tests pass.
-- **Next work:** task 4b. The sketch `firmware/eeg_node/eeg_node.ino` compiles; it needs the XIAO plugged in (COM5, data cable, no electrodes) to upload and read the serial log. Then task 5 (Oura app skeleton).
-- **Demo:** moved to 2026-11-27. Parts ordered; several have arrived (§4 Q2).
-- **Waiting on Farid:** PR #3 review; Docker Desktop install (needed before task 5b); Oura developer app registration; which parts have arrived.
+- **master** is at `309a1bf` (PRs #1 and #2 merged 2026-11-16). Nothing merged since.
+- **Active branch:** `feature/int8-sleep-model` (draft PR #3, for Farid's review). Tasks 4, 4a and 4b are done on it; 42 tests pass.
+- **Read first:** `docs/briefs/2026-11-21-int8-sleep-model.md` (results, insights, the two TFLM pitfalls found on the board, next steps).
+- **Result:** the int8 sleep model (v2, running standardisation) runs on the XIAO: outputs match Python 5/5, 224 µs per inference, 956-byte arena, 6,336-byte model. REQ-ML-03 and REQ-ML-04 are Done.
+- **Demo:** 2026-11-27. Parts ordered; several have arrived.
+- **Next work (recommended for the demo):** task 6 (feature parity on the board with `firmware/test_vectors/`), then task 6b (running standardisation + neighbour buffer + model on the board, end to end from raw samples), then task 7 (ADS1115 acquisition with the parts that have arrived). Task 5 (Oura app) runs alongside only if the demo needs Oura data.
+- **Waiting on Farid:** PR #3 review; which parts have arrived; whether the demo shows Oura data; Docker Desktop install (task 5b); Oura developer app registration.
 
 ## 1. Who works where
 
@@ -37,11 +37,11 @@ before starting, and update it before you stop.
 | A | Python reference features (filters, bands incl. sigma, skew, kurtosis, epochs) | Done (merged 2026-11-16); 32 tests pass on the laptop | `eegml/`, `tests/` |
 | A | Firmware test vectors | Done (merged 2026-11-16) | `tests/vectors/`, `firmware/test_vectors/` |
 | A | Sleep-EDF baseline (REQ-ML-02) | **Done 2026-11-16, PASS**: 20 subjects, device features macro F1 0.680 / acc 0.774 vs MNE-tutorial features 0.621 / 0.729 | `reports/sleep_edf_baseline.md` |
-| A | Int8 sleep model + conversion report (REQ-ML-03/04) | **Done 2026-11-21** (draft PR #3). Model v2, running standardisation: int8 macro F1 0.707 / acc 0.769 vs RF 0.680 / 0.774; float/int8 agreement 98.72 % (REQ-ML-03 PASS); 7,536 bytes. (v1 with whole-night stats: 0.739 / 0.796, not achievable on the device.) | `scripts/train_sleep_model.py`, `eegml/sleep_model.py`, `reports/sleep_model.md`, `firmware/eeg_node/sleep_model.h` |
+| A | Int8 sleep model + conversion report (REQ-ML-03/04) | **Done 2026-11-21** (draft PR #3). Model v2, running standardisation, per-tensor int8: int8 macro F1 0.707 / acc 0.768 vs RF 0.680 / 0.774; float/int8 agreement 98.68 % (REQ-ML-03 PASS); 6,336 bytes. (v1 with whole-night stats: 0.739 / 0.796, not achievable on the device.) | `scripts/train_sleep_model.py`, `eegml/sleep_model.py`, `reports/sleep_model.md`, `firmware/eeg_node/sleep_model.h` |
 | A | Calibration ablation (REQ-FEAT-10) | **Done 2026-11-21**: whole-night stats 0.740 macro F1; first 60 s–10 min 0.45–0.46; running stats (trained that way) 0.710 | `scripts/calibration_ablation.py`, `reports/calibration_ablation.md` |
 | A | Retrain with running standardisation (task 4a, REQ-FEAT-10) | **Done 2026-11-21** | `eegml/sleep_model.py` (`RunningStats`, `running_standardise`), `scripts/train_sleep_model.py` |
-| A | Int8 model on the XIAO (REQ-ML-04: arena used, µs per inference) | **In progress** (task 4b): bench sketch compiles (345 KB flash, 10 %; 30.8 KB RAM, 9 %); waiting for the board to be plugged in | `firmware/eeg_node/eeg_node.ino` |
-| B | Firmware: ADS1115 acquisition, filters, features, parity test | Not started; waits for parts | `firmware/eeg_node/` (to come) |
+| A | Int8 model on the XIAO (REQ-ML-04: arena used, µs per inference) | **Done 2026-11-21**: parity 5/5 with Python, 224 µs per inference, arena used 956 bytes, model 6,336 bytes; sketch 344 KB flash (10 %), 30.8 KB RAM (9 %) | `firmware/eeg_node/eeg_node.ino`, `reports/xiao_bench_2026-11-21.txt` |
+| B | Firmware: ADS1115 acquisition, filters, features, parity test | Not started; parts ordered, several received; demo 2026-11-27 | `firmware/eeg_node/` (to come) |
 | C | Oura app (OAuth2, nightly pull, sandbox) | Not started; must run on the laptop | `hub/` (to come) |
 | C | Hub stack (Mosquitto, ingest, InfluxDB, Grafana) | Not started | `hub/` (to come) |
 | D | Overnight recording with Oura | Not started | — |
@@ -61,8 +61,10 @@ Code: confirm each line, fix anything wrong, fill the blanks, and note the date.
 | `pytest` in that venv | 9.2.0 (installed from requirements.txt) | 2026-11-16 |
 | Arduino IDE / ESP32 core / TFLite Micro lib | 2.3.10 / 3.3.12 / Chirale_TensorFlowLite 2.0.0 | 2026-11-05 |
 | arduino-cli | `C:\Program Files\Arduino IDE\resources\app\lib\backend\resources\arduino-cli.exe` | 2026-11-05 |
-| Board FQBN | `esp32:esp32:XIAO_ESP32S3` | 2026-11-05 |
-| XIAO serial port | COM5 with a data cable (COM4 is a Bluetooth port; charge-only cables were the cause of earlier upload failures) | EECS 635 labs |
+| Board FQBN | `esp32:esp32:XIAO_ESP32S3` (`arduino-cli board list` shows the XIAO on COM5 as "ESP32 Family Device"; pass the FQBN explicitly) | 2026-11-21 |
+| XIAO serial port | COM5 with a data cable (COM4 is a Bluetooth port; charge-only cables were the cause of earlier upload failures) | 2026-11-21 (upload and serial confirmed) |
+| Reading the serial port from Claude Code | `arduino-cli monitor` prints nothing when its output is piped. Use pyserial instead: the **global** Python (`C:/Users/ffeis/AppData/Local/Programs/Python/Python312/python.exe`) has pyserial 3.5; the repo venv doesn't. Pulse RTS to reset the board so `setup()` lines are printed again. | 2026-11-21 |
+| TFLite Micro (Chirale_TensorFlowLite 2.0.0) pitfalls | 1) Its FULLY_CONNECTED kernel supports only per-tensor int8 weights: a per-channel model (the TF 2.21 default) gives wrong outputs (parity 0/5 on the board). `eegml.sleep_model.to_int8` disables per-channel for dense layers, and a test guards it. 2) The input tensor's memory is reused by later layers: copy the input before **every** `Invoke()`. | 2026-11-21 |
 | Separate course setup (don't mix) | EECS 635 labs use PlatformIO (`C:\Users\ffeis\.platformio\penv\Scripts\pio.exe`, espressif32@6.8.0 → Arduino core 2.0.17) and a Lab 4 venv `l4-kws-local` (Python 3.12, TF 2.19.1) | EECS 635 labs |
 | Docker Desktop (for the hub) | **Not installed yet**; Farid decided to install it on this laptop (no `docker` command, no install folder, no winget entry as of 2026-11-16) | 2026-11-16 |
 | Docker prerequisites | WSL 2 present and default; hardware virtualization enabled; RAM 13.9 GB (Docker minimum 4 GB) | 2026-11-16 |
@@ -91,15 +93,18 @@ Code: confirm each line, fix anything wrong, fill the blanks, and note the date.
 | 3a | ~~Run the new real-data test on the laptop: `python -m pytest tests/test_sleep_edf_real.py` should pass, not skip~~ Done 2026-11-16: passes | Claude Code | REQ-ML-01 |
 | 4 | ~~**Int8 sleep model.** New `scripts/train_sleep_model.py` reading the cached features in `data/cache/sleep_edf/` (no re-download): standardise features per subject (stands in for per-session calibration, REQ-FEAT-10); small dense network (input = current epoch's 30 features plus the previous 2 epochs', a few thousand parameters); same 5-fold leave-subjects-out split as the baseline, with the random forest as the bar to beat; post-training int8 quantisation with a representative set from training folds only; report float vs int8 accuracy, macro F1, per-stage recall, agreement (≥ 98 %), model bytes and an arena estimate in `reports/sleep_model.md`; export the int8 model to `firmware/eeg_node/sleep_model.h`. Tests for the windowing of neighbour epochs and the export.~~ Done 2026-11-21 | Claude Code (laptop, has the data) | REQ-ML-03/04, FEAT-10 |
 | 4a | ~~**Running standardisation.** Add running (expanding, Welford) per-session mean/SD with a 10-epoch warm-up to `eegml/sleep_model.py` (params in `config.py`); train and test with it by default in `train_sleep_model.py`; re-export `sleep_model.h`; re-check agreement ≥ 98 %; test Python stats against a Welford reference. Needs Farid's yes on §4 Q6.~~ Done 2026-11-21 | Claude Code | REQ-FEAT-10, ML-03 |
-| 4b | Run the exported model on the XIAO with the `eeg_smoke` pattern (embedded test epochs, print arena used and µs per inference). **Sketch ready:** `firmware/eeg_node/eeg_node.ino` compiles; plug in the XIAO, upload, read the SUMMARY line. | Claude Code | REQ-ML-04, ML-06 |
+| 4b | ~~Run the exported model on the XIAO with the `eeg_smoke` pattern (embedded test epochs, print arena used and µs per inference).~~ Done 2026-11-21: parity 5/5, 224 µs, arena 956 bytes. | Claude Code | REQ-ML-04, ML-06 |
 | 5 | **Oura app skeleton** in `hub/oura_app/`: plain Python first (no Docker needed): OAuth2 sign-in with a localhost callback page, encrypted token file, nightly pull + 3-day re-pull, UTC conversion, 401/429 handling, sandbox mode; tests with mocked API responses. Client ID/secret in a git-ignored `.env`. | Claude Code | REQ-OURA-01..07 |
 | 5b | Hub stack in Docker Compose (Mosquitto, ingest, InfluxDB, Grafana, Oura app) — **needs Docker Desktop installed** | Claude Code | REQ-HUB-01, OURA-08 |
-| 6 | Firmware `eeg_node`: parity test on the board using `firmware/test_vectors/` before any hardware is wired | Claude Code | REQ-FEAT-09 |
+| 6 | **Next (demo path).** Firmware `eeg_node`: parity test on the board using `firmware/test_vectors/` before any hardware is wired | Claude Code | REQ-FEAT-09 |
+| 6b | End to end on the board: raw samples → filters → features → running standardisation (Welford, as `eegml.sleep_model.RunningStats`) → [t, t-1, t-2] buffer → int8 model → stage; check against Python on a recorded Sleep-EDF segment | Claude Code | REQ-FEAT-10, ML-04 |
 | 7 | ADS1115 acquisition once parts arrive | Claude Code | REQ-HW-*, REQ-ACQ-* |
 
 ## 6. Handoff log
 
 Newest first. One line per change: date, who, what, where.
+
+- 2026-11-21 · Claude Code (laptop) · Task 4b done on the XIAO (COM5, no electrodes): `firmware/eeg_node/eeg_node.ino` with model v2 → parity 5/5 with Python (byte-identical int8 outputs), 221–224 µs per inference, arena used 956 bytes of 7,168, model 6,336 bytes → REQ-ML-04 Done (log: `reports/xiao_bench_2026-11-21.txt`). Two TFLM pitfalls found and fixed: (1) the library's FULLY_CONNECTED kernel needs per-tensor weights; a per-channel model gave 0/5 parity on the board, so `to_int8` now disables per-channel for dense layers (test added; held-out agreement 98.68 %, int8 acc 0.768 / macro F1 0.707, model 7,536 → 6,336 bytes); (2) TFLM reuses the input tensor's memory, so the bench copies the input before every Invoke. REQ-ML-06 partial (schema check in the sketch). §3 records the serial-reading method (global-Python pyserial). Recommended demo path: tasks 6 → 6b → 7. PR #3, README, brief, Notion and the home CLAUDE.md updated.
 
 - 2026-11-21 · Claude Code (laptop) · Task 4a done (Farid approved running standardisation and the order 4a → 4b). REQ-FEAT-10 rewritten: running per-session mean/SD (Welford), first 10 epochs scored with their own stats; `RunningStats`/`running_standardise` in `eegml/sleep_model.py`, `SLEEP_STANDARDISE`/`SLEEP_WARMUP_EPOCHS` in `config.py`; `train_sleep_model.py --standardise running` (default). Model v2 held-out: int8 acc 0.769 / macro F1 0.707 (recall W 0.78, N1 0.43, N2 0.78, N3 0.80, REM 0.81) vs RF 0.774 / 0.680; float/int8 agreement 98.72 %. Header v2 adds warm-up and SD-floor defines. Task 4b: `firmware/eeg_node/eeg_node.ino` (parity against the embedded outputs, µs per inference, arena used, feature-schema check for REQ-ML-06) compiles: 345,453 bytes flash (10 %), 30,816 bytes RAM (9 %); not yet run (no board connected). 3 new tests, 42 pass. Farid: parts ordered and several received; demo moved to 2026-11-27. Notion mirror updated.
 

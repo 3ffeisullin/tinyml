@@ -60,6 +60,8 @@ void setup() {
   output = interpreter->output(0);
   if (input->type != kTfLiteInt8 || input->bytes != SLEEP_MODEL_N_INPUT ||
       output->bytes != SLEEP_MODEL_N_CLASSES) halt("Unexpected tensor shapes");
+  Serial.printf("in scale %g zp %d, out scale %g zp %d\n", input->params.scale, input->params.zero_point,
+                output->params.scale, output->params.zero_point);
   Serial.printf("Model %u bytes, arena used %u / %d bytes\n", g_sleep_model_len,
                 (unsigned)interpreter->arena_used_bytes(), SLEEP_MODEL_ARENA_BYTES);
 }
@@ -68,13 +70,26 @@ void loop() {
   int matches = 0;
   uint32_t worst = 0;
   for (const TestEpoch& t : kTests) {
-    memcpy(input->data.int8, t.in, SLEEP_MODEL_N_INPUT);
+    // TFLM reuses the input tensor's memory for later layers, so the input must be
+    // copied before every Invoke (found in task 4b: reusing it gave wrong outputs).
     uint32_t t0 = micros();
-    for (int r = 0; r < kTimingRuns; r++) interpreter->Invoke();
-    uint32_t us = (micros() - t0) / kTimingRuns;
+    for (int r = 0; r < kTimingRuns; r++) {
+      memcpy(input->data.int8, t.in, SLEEP_MODEL_N_INPUT);
+      interpreter->Invoke();
+    }
+    uint32_t us = (micros() - t0) / kTimingRuns;  // includes the 90-byte copy
     worst = max(worst, us);
+    memcpy(input->data.int8, t.in, SLEEP_MODEL_N_INPUT);
+    if (interpreter->Invoke() != kTfLiteOk) halt("Invoke failed");
     bool same = memcmp(output->data.int8, t.out, SLEEP_MODEL_N_CLASSES) == 0;
     matches += same;
+    if (!same) {
+      Serial.print("  got");
+      for (int i = 0; i < SLEEP_MODEL_N_CLASSES; i++) Serial.printf(" %d", output->data.int8[i]);
+      Serial.print("  want");
+      for (int i = 0; i < SLEEP_MODEL_N_CLASSES; i++) Serial.printf(" %d", t.out[i]);
+      Serial.println();
+    }
     Serial.printf("true %-3s -> predicted %-3s  output %s Python  %lu us/inference\n", t.name,
                   SLEEP_MODEL_STAGES[argmax(output->data.int8, SLEEP_MODEL_N_CLASSES)],
                   same ? "matches" : "DIFFERS from", (unsigned long)us);

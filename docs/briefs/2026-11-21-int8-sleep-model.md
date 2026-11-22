@@ -114,3 +114,37 @@ arrived; the demo moved to **2026-11-27**.
 - **Next after 4b:** for the 2026-11-27 demo, the shortest credible path is the model bench (4b) plus, as parts
   allow, the on-device feature parity test (task 6), then live acquisition (task 7). The Oura app (task 5) is not
   on the demo's critical path unless the demo needs Oura comparison data.
+
+## Addendum 2, same evening: task 4b done on the XIAO
+
+Bench log, first boot cycle (`reports/xiao_bench_2026-11-21.txt`):
+
+```
+Model v2, feature schema 1, input 90, arena 7168 bytes
+in scale 0.0417459 zp -17, out scale 0.00390625 zp -128
+Model 6336 bytes, arena used 956 / 7168 bytes
+true W   -> predicted W    output matches Python  224 us/inference
+true N1  -> predicted N1   output matches Python  221 us/inference
+true N2  -> predicted N2   output matches Python  223 us/inference
+true N3  -> predicted N2   output matches Python  221 us/inference
+true REM -> predicted REM  output matches Python  223 us/inference
+SUMMARY parity 5/5, worst 224 us/inference, arena used 956 bytes
+```
+
+- **REQ-ML-04 Done:** 6,336 B model (limit 64 KB), 956 B arena (limit 32 KB; the 3.2 KB estimate was conservative),
+  224 µs per inference (limit 50 ms, about 220× headroom). The "N3 → N2" line is the model's own call on that test
+  epoch, identical in Python. Parity compares int8 outputs byte for byte.
+- **Pitfall 1, per-channel quantisation:** TF 2.21 quantises dense weights per channel by default, and the
+  Arduino TFLM build (Chirale_TensorFlowLite 2.0.0) handles only per-tensor FULLY_CONNECTED weights. Tested on the
+  board: a per-channel model gave 0/5 parity, with scores off by 10–50 and some predictions changed. `to_int8` now sets
+  `_experimental_disable_per_channel_quantization_for_dense_layers`, and a test fails any header with per-channel
+  tensors. Cost: agreement 98.72 → 98.68 %, int8 accuracy 0.769 → 0.768, same macro F1 0.707; the model shrank
+  from 7,536 to 6,336 bytes.
+- **Pitfall 2, input buffer reuse:** TFLM's memory planner reuses the input tensor for later activations, so
+  after `Invoke()` the input holds garbage. Copy the input before every inference (the timing loop does), and
+  never assume it survives. The node firmware must follow this too.
+- **Demo path (2026-11-27), recommended:** task 6 (feature parity on the board with `firmware/test_vectors/`) →
+  task 6b (end to end on the board: raw samples → features → running standardisation → 3-epoch buffer → model,
+  checked against Python on a Sleep-EDF segment) → task 7 (live ADS1115 acquisition with the arrived parts,
+  battery-powered or through the USB isolator if electrodes are on a person, REQ-SAFE). A credible demo could show
+  live band powers from the headband plus the model staging a replayed Sleep-EDF night on the device.

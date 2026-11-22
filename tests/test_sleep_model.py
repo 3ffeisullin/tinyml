@@ -79,6 +79,7 @@ def test_export_round_trip(tiny):
     assert f"#define SLEEP_MODEL_N_INPUT {sm.N_INPUT}" in text
     assert re.search(r"#define SLEEP_MODEL_INPUT_CLIP \d+\.\d+f", text)  # valid C float literal
     assert runner.inp["dtype"] == np.int8 and runner.out["dtype"] == np.int8
+    assert sm.per_channel_tensors(tfl) == []  # the XIAO's TFLM needs per-tensor dense weights
 
 
 @pytest.mark.skipif(not HEADER.exists(), reason="run scripts/train_sleep_model.py first")
@@ -92,6 +93,7 @@ def test_generated_header_runs_and_fits():
     r = sm.Int8Runner(tfl)
     assert list(r.inp["shape"]) == [1, sm.N_INPUT] and list(r.out["shape"]) == [1, 5]
     assert f"#define SLEEP_MODEL_FEATURE_SCHEMA {sm.FEATURE_SCHEMA_VERSION}" in text
+    assert sm.per_channel_tensors(tfl) == []  # per-channel dense weights give wrong outputs on the XIAO
     for stage in ["w", "n1", "n2", "n3", "rem"]:  # embedded test epochs reproduce their outputs
         xq = sm.parse_header_array(text, f"g_sleep_in_{stage}").astype(np.int8)
         want = sm.parse_header_array(text, f"g_sleep_out_{stage}")

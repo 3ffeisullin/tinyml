@@ -3,16 +3,16 @@
 Train an EEG pattern-recognition model on the PC, quantize it to INT8 TFLite, and run it on a
 Seeed XIAO ESP32-S3 with TensorFlow Lite Micro. (Qualcomm/Snapdragon work is a separate project.)
 
-## Project status (2026-11-21)
+## Project status (2026-11-21, evening)
 
 | Phase | State |
 |---|---|
 | Toolchain smoke test on the XIAO | Done (2026-11-05) |
 | A · Requirements, Python reference features, test vectors | Done (merged 2026-11-16) |
 | A · Sleep-EDF baseline | Done: device features macro F1 0.680 vs 0.621 for the MNE tutorial's (REQ-ML-02 pass) |
-| A · Int8 sleep model | Done in draft PR #3: running standardisation as on the device, int8 macro F1 0.707 vs 0.680 for the random forest, float/int8 agreement 98.7 % (REQ-ML-03), 7.5 KB model |
-| A · Model on the XIAO | In progress (task 4b): `firmware/eeg_node` bench sketch compiles; board run next |
-| B · Firmware (`eeg_node`) | Model bench only; parts ordered, several received; demo 2026-11-27 |
+| A · Int8 sleep model | Done in draft PR #3: running standardisation as on the device, int8 macro F1 0.707 vs 0.680 for the random forest, float/int8 agreement 98.7 % (REQ-ML-03), 6.3 KB model |
+| A · Model on the XIAO | Done: outputs match Python 5/5, 224 µs per inference, 956-byte arena (REQ-ML-04) |
+| B · Firmware (`eeg_node`) | Model bench runs on the board; next: feature parity (task 6), end to end (6b), acquisition (7). Parts ordered, several received; demo 2026-11-27 |
 | C · Oura app and hub | Not started; Oura app after the int8 model, hub needs Docker |
 | D · Overnight recording | Not started |
 
