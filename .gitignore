@@ -11,5 +11,6 @@ data/cache/
 # Secrets: Oura OAuth client ID/secret and tokens (never commit)
 .env
 .env.*
+*.env
 !.env.example
 secrets/
