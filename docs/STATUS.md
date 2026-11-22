@@ -11,9 +11,9 @@ before starting, and update it before you stop.
 - **Active branch:** `feature/int8-sleep-model` (draft PR #3, for Farid's review). Tasks 4, 4a and 4b are done on it; 42 tests pass.
 - **Read first:** `docs/briefs/2026-11-21-int8-sleep-model.md` (results, insights, the two TFLM pitfalls found on the board, next steps).
 - **Result:** the int8 sleep model (v2, running standardisation) runs on the XIAO: outputs match Python 5/5, 224 µs per inference, 956-byte arena, 6,336-byte model. REQ-ML-03 and REQ-ML-04 are Done.
-- **Demo:** 2026-11-27. Parts ordered; several have arrived.
+- **Demo:** 2026-11-27. In hand: resistors, capacitors, electrodes. Ordered, not yet here: the rest (BioAmp EXG Pill, ADS1115, etc.), so task 7 waits for them; tasks 6 and 6b don't.
 - **Next work (recommended for the demo):** task 6 (feature parity on the board with `firmware/test_vectors/`), then task 6b (running standardisation + neighbour buffer + model on the board, end to end from raw samples), then task 7 (ADS1115 acquisition with the parts that have arrived). Task 5 (Oura app) runs alongside only if the demo needs Oura data.
-- **Waiting on Farid:** PR #3 review; which parts have arrived; whether the demo shows Oura data; Docker Desktop install (task 5b); Oura developer app registration.
+- **Waiting on Farid:** PR #3 review; arrival dates for the Pill and ADS1115; whether the demo shows Oura data; where "G:" is (not visible on the laptop, §4 Q8); Docker Desktop install (task 5b); Oura developer app registration.
 
 ## 1. Who works where
 
@@ -76,12 +76,13 @@ Code: confirm each line, fix anything wrong, fill the blanks, and note the date.
 ## 4. Open questions for Farid
 
 1. ~~Review PR #1's decisions (requirements §7)~~ Accepted by merging PR #1, 2026-11-16.
-2. ~~Have the front-end parts been ordered?~~ 2026-11-21: ordered, several received. **Demo moved to 2026-11-27.** Which parts have arrived, and when is the rest due?
+2. ~~Have the front-end parts been ordered?~~ 2026-11-21: ordered, several received. **Demo moved to 2026-11-27.** 2026-11-21 (evening): resistors, capacitors and electrodes in hand; the rest ordered. When are the Pill and ADS1115 due?
 3. Oura developer app: registered yet? Needs an Oura account with an active membership for a Gen3+ ring.
 4. Repository rename: GitHub still shows `3ffeisullin/tinyml` with default branch `master`.
 5. ~~Docker Desktop is not installed on the laptop, and the hub (Phase C, REQ-HUB-01) needs it. Install it on the laptop, or run the hub on the Raspberry Pi?~~ Decided 2026-11-16: install Docker Desktop on the laptop.
 6. ~~**REQ-FEAT-10 (new 2026-11-21):** the sleep model loses most of its gain with stats from a short calibration (macro F1 0.74 → 0.45). Change REQ-FEAT-10 to a running per-session mean/SD (10-epoch warm-up; trained the same way: 0.710 vs the random forest's 0.680), keeping the 60 s calibration as a signal-quality check?~~ **Yes** (Farid, 2026-11-21); requirement updated.
 7. ~~**Task order (new 2026-11-21):** recommended 4a (retrain, ~1 h) → 4b (XIAO, no electrodes) → 5 (Oura app; needs the Oura developer app, Q3). 4b can also run first with the current header.~~ Farid: 4a, then 4b (2026-11-21).
+8. **Hub data on a G: drive (new 2026-11-21):** Farid asked whether the hub database can live on G:. The laptop shows no G: (only C:, 252 GB free; no mapped network drive, no Google Drive for desktop). What is G: (external USB disk, network share, cloud drive)? Advice given: a local NTFS external disk can hold Docker's whole disk image (Docker Desktop → Settings → Resources → Advanced → Disk image location), but must be connected whenever the hub runs; don't put a live database on a cloud-synced or network drive; a bind mount from a Windows path into the InfluxDB container works but is slow. Recommended: keep the database on C: and back it up to G:.
 
 ## 5. Next tasks (in order)
 
@@ -103,6 +104,8 @@ Code: confirm each line, fix anything wrong, fill the blanks, and note the date.
 ## 6. Handoff log
 
 Newest first. One line per change: date, who, what, where.
+
+- 2026-11-21 · Claude Code (laptop) · Parts: resistors, capacitors and electrodes in hand; the rest ordered (task 7 waits for the Pill and ADS1115). Farid asked about Docker disk space (~10–15 GB, C: has 252 GB free) and putting the hub database on G:; no G: is visible on the laptop, so §4 Q8 asks what it is. Notion mirror updated.
 
 - 2026-11-21 · Claude Code (laptop) · Task 4b done on the XIAO (COM5, no electrodes): `firmware/eeg_node/eeg_node.ino` with model v2 → parity 5/5 with Python (byte-identical int8 outputs), 221–224 µs per inference, arena used 956 bytes of 7,168, model 6,336 bytes → REQ-ML-04 Done (log: `reports/xiao_bench_2026-11-21.txt`). Two TFLM pitfalls found and fixed: (1) the library's FULLY_CONNECTED kernel needs per-tensor weights; a per-channel model gave 0/5 parity on the board, so `to_int8` now disables per-channel for dense layers (test added; held-out agreement 98.68 %, int8 acc 0.768 / macro F1 0.707, model 7,536 → 6,336 bytes); (2) TFLM reuses the input tensor's memory, so the bench copies the input before every Invoke. REQ-ML-06 partial (schema check in the sketch). §3 records the serial-reading method (global-Python pyserial). Recommended demo path: tasks 6 → 6b → 7. PR #3, README, brief, Notion and the home CLAUDE.md updated.
 
