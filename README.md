@@ -20,7 +20,7 @@ Seeed XIAO ESP32-S3 with TensorFlow Lite Micro. (Qualcomm/Snapdragon work is a s
 | C · Oura app and hub | Oura app needed for the demo (2026-11-27), waiting on the Oura developer app registration; hub needs Docker (after the demo) |
 | D · Overnight recording | Not started |
 
-Latest work: [`docs/palma-mapping.md`](docs/palma-mapping.md) (what we use from Palma et al. 2024), [`docs/briefs/2026-11-22-demo-display.md`](docs/briefs/2026-11-22-demo-display.md) (demo display), [`docs/briefs/2026-11-22-deck-update.md`](docs/briefs/2026-11-22-deck-update.md) (summary since 2026-11-21, demo plan), [`docs/briefs/2026-11-22-acquisition.md`](docs/briefs/2026-11-22-acquisition.md), wiring-day checklist [`docs/bringup.md`](docs/bringup.md), [`docs/briefs/2026-11-21-end-to-end-replay.md`](docs/briefs/2026-11-21-end-to-end-replay.md), [`docs/briefs/2026-11-21-feature-parity.md`](docs/briefs/2026-11-21-feature-parity.md) and [`docs/briefs/2026-11-21-int8-sleep-model.md`](docs/briefs/2026-11-21-int8-sleep-model.md).
+Latest work: [`docs/deep-sleep.md`](docs/deep-sleep.md) (deep sleep: the rule, how well it can be measured, where we stand), [`docs/palma-mapping.md`](docs/palma-mapping.md) (what we use from Palma et al. 2024), [`docs/briefs/2026-11-22-demo-display.md`](docs/briefs/2026-11-22-demo-display.md) (demo display), [`docs/briefs/2026-11-22-deck-update.md`](docs/briefs/2026-11-22-deck-update.md) (summary since 2026-11-21, demo plan), [`docs/briefs/2026-11-22-acquisition.md`](docs/briefs/2026-11-22-acquisition.md), wiring-day checklist [`docs/bringup.md`](docs/bringup.md), [`docs/briefs/2026-11-21-end-to-end-replay.md`](docs/briefs/2026-11-21-end-to-end-replay.md), [`docs/briefs/2026-11-21-feature-parity.md`](docs/briefs/2026-11-21-feature-parity.md) and [`docs/briefs/2026-11-21-int8-sleep-model.md`](docs/briefs/2026-11-21-int8-sleep-model.md).
 New to the project? Start with [`docs/getting-started.md`](docs/getting-started.md).
 Full state, the laptop environment, next tasks and the handoff log are in
 [`docs/STATUS.md`](docs/STATUS.md). Requirements are in
@@ -53,6 +53,7 @@ Project Status & Handoff", mirrors the status file.
 | `scripts/sleep_edf_baseline.py` | Sleep-EDF Fpz-Cz baseline: device features vs MNE-tutorial features, leave-subjects-out |
 | `eegml/sleep_model.py` | Sleep-model input (per-session standardisation, clip, previous 2 epochs), int8 conversion, C-header export |
 | `scripts/train_sleep_model.py` | Int8 sleep-stage model: same split as the baseline, float vs int8 report, exports `firmware/eeg_node/sleep_model.h` |
+| `scripts/deep_sleep_scale_ablation.py` | Deep-sleep minutes vs input scaling (per-night vs fixed), `reports/deep_sleep_scale_ablation.md` |
 | `scripts/stage_minutes_report.py` | Minutes per sleep stage, total sleep time and deep-sleep share, per night: model vs experts (`reports/stage_minutes.md`) |
 | `scripts/demo_display.py` | Demo window: the board staging a replayed night next to the experts' hypnogram, or live band power and relative alpha (task 7d) |
 | `scripts/live_log.py` | Starts a live session on the XIAO (fake source or ADS1115), saves the output, summarises rate, errors and band powers |

@@ -33,7 +33,7 @@ be reused here; its feature-engineering ideas can.** That's the conclusion the c
 | Palma element | Relevant now? | Decision |
 |---|---|---|
 | **HMM state features** (fit a Gaussian HMM to a person's signal; use state means, SDs and time in each state) | **Yes, the main idea to take.** Sleep is itself a hidden-state process, and REQ-FEAT-11 already calls for this. | Evaluate on Sleep-EDF (REQ-FEAT-11): HMM on the per-second band-power series, per night. Two changes from Palma's code: **sort states by mean** so "state 1" means the same thing for everyone (their code doesn't, see §3), and choose the number of states by BIC. Fitting runs on the PC/hub after the night. On the board, at most a fixed, pre-trained HMM's forward pass (cheap). Judge by macro F1 **and deep-sleep minutes error**. |
-| **Peak features** (count of local peaks per second, mean peak height, mean curvature, on a band envelope) | **Yes, and better suited to sleep than to the maze.** Sleep's defining events are envelope peaks: spindles (sigma bursts, N2) and slow waves (large delta, N3). | Propose new features: sigma-envelope peak rate (≈ spindle density) and delta-envelope peak height/rate (≈ slow-wave activity), per epoch. Cheap on the board. Aimed directly at the N2 ↔ N3 confusion that inflates deep-sleep time (§5). Needs Farid's OK as a new requirement. |
+| **Peak features** (count of local peaks per second, mean peak height, mean curvature, on a band envelope) | **Yes, and better suited to sleep than to the maze.** Sleep's defining events are envelope peaks: spindles (sigma bursts, N2) and slow waves (large delta, N3). | Propose new features: sigma-envelope peak rate (≈ spindle density) and delta-envelope peak height/rate (≈ slow-wave activity), per epoch. Cheap on the board. Aimed directly at the N2 ↔ N3 confusion that inflates deep-sleep time (§5). Approved by Farid 2026-11-22 as **REQ-FEAT-12**; design in `docs/deep-sleep.md` §5. |
 | **Mixed-effects models** (per-person random intercept and slope) | **Not as model features. Yes for analysis later.** | When we have several nights per person (Phase D, Oura comparison), use mixed models to separate person-to-person from night-to-night variation, e.g. "is this person's deep sleep lower than their own baseline?". Fit them on all data properly, not per group (§3). |
 | **Frontal midline theta** as a marker of learning / spatial memory | **Not for sleep staging.** A possible future wake-state capability. | Our electrode is Fp1, not Fz, and it's dominated by eye movements when awake, so we can't reproduce their measure. Park it as an idea for a "focus / learning" capability; revisit with a second channel near Fz. |
 | **Morlet wavelet envelope** (fine time resolution) | Partly. | Our 1 s FFT windows are enough for 30 s staging. Wavelet or Hilbert envelopes would be needed for the peak features above; compute them on the PC first, then decide on the board. |
@@ -73,8 +73,7 @@ If useful, items 1 and 4 could be reported to the authors as issues on the origi
 
 - **REQ-FEAT-11 (HMM features)** stays Open, with the two fixes above (sorted states, BIC), and is judged on macro F1
   and deep-sleep minutes.
-- **Proposed new requirement** (for Farid's OK): spindle- and slow-wave-style envelope peak features, from Palma's
-  peak/curvature idea.
+- **REQ-FEAT-12** (approved 2026-11-22): spindle and slow-wave event features, from Palma's peak/curvature idea.
 - **Provenance:** `docs/model-provenance.md` now says the shipped model uses no Palma code, data or models.
 - **Record corrected:** the 2026-11-16 STATUS note credited per-session standardisation to Palma; it isn't from there.
 

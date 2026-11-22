@@ -1,0 +1,104 @@
+"""Does per-night standardisation cost us deep-sleep minutes? (deep-sleep research, 2026-11-22)
+
+Sleep scorers call N3 when slow waves (0.5-2 Hz) larger than 75 uV peak-to-peak fill at least
+20 % of an epoch: an *absolute* amplitude rule. The deployed model sees features standardised
+with the night's own running mean/SD (REQ-FEAT-10), which removes the night's absolute level.
+Hypothesis: that is why the model pulls every night's N3 toward the average
+(reports/stage_minutes.md), and why the random forest on raw features has the lower N3 error.
+
+Same 5-fold leave-subjects-out split and float net as scripts/calibration_ablation.py; inputs:
+  * running:            per-night running standardisation (as deployed)
+  * fixed:              standardised with the training subjects' mean/SD (absolute level kept)
+  * running + fixed:    both, side by side (twice the inputs)
+Each is judged on macro F1 and on per-night minutes (scripts/stage_minutes_report.py).
+
+    .\\venv\\Scripts\\python.exe scripts\\deep_sleep_scale_ablation.py
+Writes reports/deep_sleep_scale_ablation.md and .json. Float models only; nothing is deployed.
+"""
+import json
+import sys
+from pathlib import Path
+
+import numpy as np
+from sklearn.metrics import f1_score
+from sklearn.model_selection import GroupKFold
+
+ROOT = Path(__file__).resolve().parents[1]
+sys.path.insert(0, str(ROOT)); sys.path.insert(0, str(ROOT / "scripts"))
+import train_sleep_model as T  # noqa: E402
+from eegml import sleep_model as sm  # noqa: E402
+from stage_minutes_report import compare_night, summarise  # noqa: E402
+
+MEASURES = ["N3", "N3_pct", "N2", "REM", "TST"]
+
+
+def main():
+    sys.stdout.reconfigure(encoding="utf-8", errors="replace")
+    cache = ROOT / "data" / "cache" / "sleep_edf"
+    raws, ys = [], []
+    for s in range(20):
+        d = np.load(cache / f"sc{s:02d}.npz"); raws.append(d["ours"]); ys.append(d["y"])
+    g = np.concatenate([np.full(len(v), i) for i, v in enumerate(ys)]); y = np.concatenate(ys)
+    raw_all = np.vstack(raws)
+    run = np.vstack([sm.model_input(r, mode="running") for r in raws])
+    rng = np.random.default_rng(T.SEED)
+    variants = ("running", "fixed", "running + fixed")
+    pred = {k: np.empty_like(y) for k in variants}
+    for k_fold, (tr, te) in enumerate(GroupKFold(5).split(run, y, g)):
+        mu, sd = raw_all[tr].mean(0), raw_all[tr].std(0)          # training subjects only
+        fixed = np.vstack([sm.model_input(r, mu, sd) for r in raws])
+        X = {"running": run, "fixed": fixed, "running + fixed": np.hstack([run, fixed])}
+        for k in variants:
+            import tensorflow as tf
+            tf.keras.utils.set_random_seed(int(rng.integers(1 << 30)))
+            m = sm.build_model(n_input=X[k].shape[1])
+            val = np.isin(g[tr], rng.choice(np.unique(g[tr]), T.N_VAL_SUBJECTS, replace=False))
+            es = tf.keras.callbacks.EarlyStopping(monitor="val_loss", patience=10, restore_best_weights=True)
+            xt, yt = X[k][tr], y[tr]
+            m.fit(xt[~val], yt[~val], validation_data=(xt[val], yt[val]), epochs=150, callbacks=[es],
+                  batch_size=128, verbose=0, class_weight=T.class_weights(yt))
+            pred[k][te] = m.predict(X[k][te], verbose=0).argmax(1)
+        print(f"  fold {k_fold} done", flush=True)
+
+    res = {}
+    for k, p in pred.items():
+        nights = {f"SC{s:02d}": compare_night(y[g == s], p[g == s]) for s in np.unique(g)}
+        summ = summarise(nights)
+        n3 = np.array([n["model"]["N3_pct"] for n in nights.values()])
+        res[k] = {"macro_f1": float(f1_score(y, p, average="macro", labels=list(range(5)), zero_division=0)),
+                  "summary": {m: summ[m] for m in MEASURES},
+                  "model_n3_pct_range": [float(n3.min()), float(n3.max())]}
+    experts = np.array([compare_night(y[g == s], y[g == s])["experts"]["N3_pct"] for s in np.unique(g)])
+    out = ROOT / "reports"
+    (out / "deep_sleep_scale_ablation.json").write_text(json.dumps(res, indent=2))
+    rows = ["| Input standardisation | Macro F1 | N3 MAE (min) | N3 r | N3 % MAE | N3 % range across nights | "
+            "N2 MAE (min) | REM MAE (min) | TST MAE (min) |", "|---|---|---|---|---|---|---|---|---|"]
+    for k, r in res.items():
+        s = r["summary"]
+        lo, hi = r["model_n3_pct_range"]
+        rows.append(f"| {k} | {r['macro_f1']:.3f} | {s['N3']['mae']:.1f} | {s['N3']['r']:.2f} | "
+                    f"{s['N3_pct']['mae']:.1f} | {lo:.1f}–{hi:.1f} % | {s['N2']['mae']:.1f} | "
+                    f"{s['REM']['mae']:.1f} | {s['TST']['mae']:.1f} |")
+    md = f"""# Deep sleep and input scaling (float models)
+
+Same 20 Sleep-EDF nights and 5-fold leave-subjects-out split as `reports/calibration_ablation.md`;
+float dense net; only the input standardisation changes. "fixed" uses the training subjects' mean/SD, so
+a night's absolute slow-wave level reaches the model. Experts' deep sleep spans
+{experts.min():.1f}–{experts.max():.1f} % of sleep across these nights. Generated by
+`scripts/deep_sleep_scale_ablation.py`.
+
+{chr(10).join(rows)}
+
+For reference (`reports/stage_minutes.md`): deployed int8 model N3 MAE 25.2 min; random forest on raw features
+18.4 min. One seed per variant, so differences of a few minutes are within run-to-run noise.
+
+Caveat for the headband: "fixed" scaling only works if the device's microvolts are right, i.e. after the
+bench calibration of `PILL_GAIN` (`docs/bringup.md` step 5), and if Fp1–mastoid amplitudes are mapped to
+Fpz–Cz ones (they are larger).
+"""
+    (out / "deep_sleep_scale_ablation.md").write_text(md, encoding="utf-8")
+    print(md)
+
+
+if __name__ == "__main__":
+    main()
