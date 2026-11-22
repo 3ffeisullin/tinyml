@@ -49,7 +49,7 @@ def test_model_input_shape_clip_and_config():
     assert sm.NEIGHBOURS == config.SLEEP_NEIGHBOURS and sm.INPUT_CLIP == config.SLEEP_INPUT_CLIP
     x = np.random.default_rng(2).normal(size=(50, sm.N_FEATURES))
     x[10, 0] = 1e6
-    xi = sm.model_input(x)
+    xi = sm.model_input(x, mode="whole-night")
     assert xi.shape == (50, sm.N_INPUT) and xi.dtype == np.float32
     assert np.abs(xi).max() <= sm.INPUT_CLIP
     assert xi[10, 0] == sm.INPUT_CLIP and xi[11, sm.N_FEATURES] == sm.INPUT_CLIP  # lag-1 block
@@ -96,3 +96,27 @@ def test_generated_header_runs_and_fits():
         xq = sm.parse_header_array(text, f"g_sleep_in_{stage}").astype(np.int8)
         want = sm.parse_header_array(text, f"g_sleep_out_{stage}")
         np.testing.assert_array_equal(r.predict_q(xq[None])[0], want)
+
+
+def test_running_standardise_matches_reference_definition():
+    x = np.random.default_rng(3).normal(2, 5, size=(40, 6))
+    z = sm.running_standardise(x, warmup=10)
+    for t in range(40):
+        w = x[:max(t + 1, 10)]
+        np.testing.assert_allclose(z[t], (x[t] - w.mean(0)) / w.std(0), rtol=1e-10)
+
+
+def test_running_standardise_short_session_and_config():
+    x = np.random.default_rng(4).normal(size=(4, 3))  # shorter than the warm-up
+    z = sm.running_standardise(x, warmup=10)
+    np.testing.assert_allclose(z, (x - x.mean(0)) / x.std(0))
+    assert sm.WARMUP == config.SLEEP_WARMUP_EPOCHS and config.SLEEP_STANDARDISE == "running"
+    np.testing.assert_allclose(sm.model_input(x), sm.stack_neighbours(np.clip(z, -6, 6)).astype(np.float32))
+
+
+def test_welford_in_float32_is_close_enough_for_the_device():
+    # Real feature scale: log powers ~0-4, kurtosis up to ~50; a full night ~1000 epochs.
+    x = np.random.default_rng(5).normal([2, 0.3, 10], [0.5, 0.1, 8], size=(1000, 3))
+    z64 = sm.running_standardise(x)
+    z32 = sm.running_standardise(x.astype(np.float32), dtype=np.float32)
+    assert np.abs(z32 - z64).max() < 1e-3  # far below one int8 input step (~0.04)

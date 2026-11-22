@@ -51,3 +51,9 @@ class FilterSpec:
 SLEEP_NEIGHBOURS = 2
 SLEEP_INPUT_CLIP = 6.0      # standardised units
 SLEEP_SD_FLOOR = 1e-6
+# REQ-FEAT-10 (changed 2026-11-21): running per-session standardisation. The
+# first SLEEP_WARMUP_EPOCHS epochs (5 min) are buffered and scored together with
+# their own mean/SD once the warm-up completes; after that each epoch updates the
+# running mean/SD (Welford, population SD) and is then standardised with it.
+SLEEP_STANDARDISE = "running"   # or "whole-night" (offline reference only)
+SLEEP_WARMUP_EPOCHS = 10

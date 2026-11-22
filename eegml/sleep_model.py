@@ -1,8 +1,10 @@
 """Sleep-stage model input pipeline and int8 export (REQ-ML-03/04, REQ-FEAT-10).
 
 The firmware must build the model input exactly as `model_input` does:
-  1. standardise each of the 30 epoch features with the session's own mean/SD
-     (REQ-FEAT-10; on the device these come from the calibration state),
+  1. standardise each of the 30 epoch features with a running per-session
+     mean/SD (REQ-FEAT-10, `RunningStats`): buffer the first WARMUP epochs and
+     score them with their own stats once the warm-up completes; after that
+     update the stats with each new epoch, then standardise it,
   2. clip to +-INPUT_CLIP,
   3. concatenate [current, previous, previous-but-one] epochs (causal; at the
      start of a session the missing previous epochs repeat the first epoch).
@@ -12,11 +14,13 @@ import numpy as np
 from .config import SLEEP_INPUT_CLIP as INPUT_CLIP
 from .config import SLEEP_NEIGHBOURS as NEIGHBOURS
 from .config import SLEEP_SD_FLOOR as SD_FLOOR
+from .config import SLEEP_STANDARDISE as STANDARDISE
+from .config import SLEEP_WARMUP_EPOCHS as WARMUP
 from .epochs import EPOCH_FEATURE_NAMES
 
 N_FEATURES = len(EPOCH_FEATURE_NAMES)    # 30
 N_INPUT = N_FEATURES * (NEIGHBOURS + 1)  # 90
-MODEL_VERSION = 1
+MODEL_VERSION = 2                        # 2: running standardisation (REQ-FEAT-10)
 FEATURE_SCHEMA_VERSION = 1               # = feature_vectors_v1 (tests/vectors)
 
 
@@ -26,6 +30,45 @@ def standardise(x: np.ndarray, mean=None, sd=None):
     mean = x.mean(0) if mean is None else np.asarray(mean)
     sd = x.std(0) if sd is None else np.asarray(sd)
     return (x - mean) / np.maximum(sd, SD_FLOOR), mean, sd
+
+
+class RunningStats:
+    """Welford mean and population SD, one value per feature; what the firmware keeps."""
+
+    def __init__(self, n_features: int, dtype=np.float64):
+        self.n = 0
+        self.mean = np.zeros(n_features, dtype)
+        self.m2 = np.zeros(n_features, dtype)
+
+    def update(self, x):
+        self.n += 1
+        d = x - self.mean
+        self.mean += d / self.n
+        self.m2 += d * (x - self.mean)
+
+    @property
+    def sd(self):
+        return np.sqrt(self.m2 / max(self.n, 1))
+
+
+def running_standardise(x: np.ndarray, warmup: int = WARMUP, dtype=np.float64) -> np.ndarray:
+    """Causal z-score for one session in time order (device behaviour).
+
+    Epochs 0..warmup-1 use the stats of those warm-up epochs (scored once the
+    warm-up completes); epoch t >= warmup uses the stats of epochs 0..t.
+    Equals (x[t] - x[:max(t+1, warmup)].mean()) / .std().
+    """
+    x = np.asarray(x, dtype=dtype)
+    z = np.empty_like(x)
+    rs = RunningStats(x.shape[1], dtype)
+    for t, row in enumerate(x):
+        rs.update(row)
+        if t + 1 == min(warmup, len(x)):
+            k = t + 1
+            z[:k] = (x[:k] - rs.mean) / np.maximum(rs.sd, SD_FLOOR)
+        elif t + 1 > warmup:
+            z[t] = (row - rs.mean) / np.maximum(rs.sd, SD_FLOOR)
+    return z
 
 
 def stack_neighbours(x: np.ndarray, k: int = NEIGHBOURS) -> np.ndarray:
@@ -44,9 +87,18 @@ def stack_neighbours(x: np.ndarray, k: int = NEIGHBOURS) -> np.ndarray:
     return np.concatenate(parts, axis=1)
 
 
-def model_input(x_session: np.ndarray, mean=None, sd=None) -> np.ndarray:
-    """Raw epoch features of one session (time order) -> float32 model input [n, N_INPUT]."""
-    z, _, _ = standardise(x_session, mean, sd)
+def model_input(x_session: np.ndarray, mean=None, sd=None, mode: str = STANDARDISE) -> np.ndarray:
+    """Raw epoch features of one session (time order) -> float32 model input [n, N_INPUT].
+
+    mode "running" (device, default) or "whole-night" (offline reference). Passing
+    mean/sd uses those fixed stats instead.
+    """
+    if mean is None and sd is None and mode == "running":
+        z = running_standardise(x_session)
+    elif mode in ("running", "whole-night"):
+        z, _, _ = standardise(x_session, mean, sd)
+    else:
+        raise ValueError(f"unknown standardisation mode {mode!r}")
     return stack_neighbours(np.clip(z, -INPUT_CLIP, INPUT_CLIP)).astype(np.float32)
 
 
@@ -123,6 +175,8 @@ def header_text(tflite: bytes, runner: "Int8Runner", samples: dict, stage_names,
          f"#define SLEEP_MODEL_NEIGHBOURS {NEIGHBOURS}  // input = [t, t-1, t-2] x features",
          f"#define SLEEP_MODEL_N_INPUT {N_INPUT}",
          f"#define SLEEP_MODEL_N_CLASSES {len(stage_names)}",
+         f"#define SLEEP_MODEL_WARMUP_EPOCHS {WARMUP}  // running mean/SD warm-up (REQ-FEAT-10)",
+         f"#define SLEEP_MODEL_SD_FLOOR {SD_FLOOR!r}f",
          f"#define SLEEP_MODEL_INPUT_CLIP {float(INPUT_CLIP)!r}f  // standardised units, before quantising",
          f"#define SLEEP_MODEL_INPUT_SCALE {runner.in_scale:.9g}f",
          f"#define SLEEP_MODEL_INPUT_ZERO_POINT {int(runner.in_zero)}",

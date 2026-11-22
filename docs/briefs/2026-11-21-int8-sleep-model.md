@@ -84,3 +84,33 @@ Per-fold float accuracy ranges from 0.766 to 0.829, so the spread between subjec
 | 4b | Run the model on the XIAO: embedded test epochs must reproduce `g_sleep_out_*`; print arena used and µs per inference | Laptop + XIAO, no electrodes | Closes REQ-ML-04. Can use the current header (same architecture), so it doesn't strictly wait for 4a. |
 | 5 | Oura app skeleton (`hub/oura_app/`) | Laptop | Needs the Oura developer app registered. |
 | later | More Sleep-EDF subjects (~78 SC subjects); temporal smoothing / HMM (REQ-FEAT-11); artifact gate (REQ-ML-05); schema check on the device (REQ-ML-06) | Laptop | More subjects is the cheapest accuracy gain to try. |
+
+## Addendum, same day: task 4a done, task 4b sketch ready
+
+Farid approved the REQ-FEAT-10 change and the order 4a → 4b. Parts are ordered and several have
+arrived; the demo moved to **2026-11-27**.
+
+- **Running standardisation is now the default** (`config.SLEEP_STANDARDISE = "running"`,
+  `SLEEP_WARMUP_EPOCHS = 10`). Device behaviour, mirrored by `eegml.sleep_model.RunningStats`: buffer the
+  first 10 epochs (5 min) and score them with their own Welford mean/population SD once the warm-up completes;
+  after that, update the stats with each epoch and then standardise it. A float32 Welford stays within 1e-3
+  of float64 over a 1,000-epoch night, which is far below one int8 input step (0.042).
+- **Model v2** (`SLEEP_MODEL_VERSION 2`, same architecture, 7,536 bytes), held out:
+
+| Model | Accuracy | Macro F1 | W | N1 | N2 | N3 | REM |
+|---|---|---|---|---|---|---|---|
+| Net v2, float | 0.769 | 0.708 | 0.77 | 0.44 | 0.78 | 0.81 | 0.82 |
+| Net v2, int8 | 0.769 | 0.707 | 0.78 | 0.43 | 0.78 | 0.80 | 0.81 |
+| Random forest, baseline | 0.774 | 0.680 | 0.84 | 0.20 | 0.85 | 0.83 | 0.68 |
+| Random forest, v2 input | 0.785 | 0.697 | 0.82 | 0.22 | 0.85 | 0.71 | 0.83 |
+
+  Float/int8 agreement 98.72 % (folds 98.40–98.90 %): passes REQ-ML-03, with less margin than v1's 99.20 %.
+  The net beats the forest on macro F1 (0.707 vs 0.680) and N1 recall (0.43 vs 0.20) at about the same accuracy.
+  The whole-night v1 numbers (0.739) remain in `reports/calibration_ablation.md` as the offline ceiling.
+- **Task 4b:** `firmware/eeg_node/eeg_node.ino` checks the model's feature schema (REQ-ML-06), runs the 5
+  embedded test epochs, checks the int8 outputs against Python byte for byte, times 200 inferences each and prints
+  the arena used. Compiles for `esp32:esp32:XIAO_ESP32S3`: 345,453 bytes flash (10 %), 30,816 bytes RAM (9 %).
+  Not yet run: the board wasn't connected.
+- **Next after 4b:** for the 2026-11-27 demo, the shortest credible path is the model bench (4b) plus, as parts
+  allow, the on-device feature parity test (task 6), then live acquisition (task 7). The Oura app (task 5) is not
+  on the demo's critical path unless the demo needs Oura comparison data.

@@ -27,23 +27,19 @@ import train_sleep_model as T  # noqa: E402
 from eegml import sleep_model as sm  # noqa: E402
 from eegml.sleep_edf import STAGE_NAMES  # noqa: E402
 
-WARM = 10  # running stats use at least the first 10 epochs (5 min)
+WARM = sm.WARMUP
 
 
-def running(x, warm=WARM):
-    """Causal z-score: stats from epochs 0..max(t, warm-1). Device: Welford update per epoch."""
-    z = np.empty_like(x, dtype=float)
-    for t in range(len(x)):
-        w = x[:max(t + 1, warm)]
-        z[t] = (x[t] - w.mean(0)) / np.maximum(w.std(0), sm.SD_FLOOR)
-    return sm.stack_neighbours(np.clip(z, -sm.INPUT_CLIP, sm.INPUT_CLIP)).astype(np.float32)
+def running(x):
+    """Device behaviour (eegml.sleep_model.running_standardise, Welford)."""
+    return sm.model_input(x, mode="running")
 
 
 def first_n(x, n):
     return sm.model_input(x, x[:n].mean(0), x[:n].std(0))
 
 
-VARIANTS = {"whole night": sm.model_input, "first 60 s": lambda x: first_n(x, 2),
+VARIANTS = {"whole night": lambda x: sm.model_input(x, mode="whole-night"), "first 60 s": lambda x: first_n(x, 2),
             "first 5 min": lambda x: first_n(x, 10), "first 10 min": lambda x: first_n(x, 20),
             "running": running}
 RETRAINED = {"trained+tested on first 5 min": "first 5 min", "trained+tested on running": "running"}

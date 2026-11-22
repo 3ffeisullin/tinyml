@@ -9,10 +9,11 @@ before starting, and update it before you stop.
 
 - **master** is at `309a1bf` (PRs #1 and #2 merged 2026-11-16). 32 tests pass on the laptop.
 - **Active branch:** `feature/int8-sleep-model` (draft PR #3). Task 4 is done on it (2026-11-21); 39 tests pass.
-- **Read first:** `docs/briefs/2026-11-21-int8-sleep-model.md` (results, insights, decisions, next steps).
-- **Waiting on Farid:** review of PR #3; decision on REQ-FEAT-10 (running standardisation, §4 Q6); task order (§4 Q7).
-- **Next work (recommended):** task 4a (retrain with running standardisation), task 4b (model on the XIAO), then task 5 (Oura app skeleton).
-- **Waiting on Farid:** Docker Desktop install (needed before task 5b, the hub stack), parts order status, Oura developer app registration.
+- **Read first:** `docs/briefs/2026-11-21-int8-sleep-model.md` (results, insights, decisions, next steps; addendum for task 4a).
+- **Done 2026-11-21:** task 4 and task 4a (running standardisation, Farid approved). The model in `firmware/eeg_node/sleep_model.h` is now the device-realistic v2. 42 tests pass.
+- **Next work:** task 4b. The sketch `firmware/eeg_node/eeg_node.ino` compiles; it needs the XIAO plugged in (COM5, data cable, no electrodes) to upload and read the serial log. Then task 5 (Oura app skeleton).
+- **Demo:** moved to 2026-11-27. Parts ordered; several have arrived (§4 Q2).
+- **Waiting on Farid:** PR #3 review; Docker Desktop install (needed before task 5b); Oura developer app registration; which parts have arrived.
 
 ## 1. Who works where
 
@@ -36,10 +37,10 @@ before starting, and update it before you stop.
 | A | Python reference features (filters, bands incl. sigma, skew, kurtosis, epochs) | Done (merged 2026-11-16); 32 tests pass on the laptop | `eegml/`, `tests/` |
 | A | Firmware test vectors | Done (merged 2026-11-16) | `tests/vectors/`, `firmware/test_vectors/` |
 | A | Sleep-EDF baseline (REQ-ML-02) | **Done 2026-11-16, PASS**: 20 subjects, device features macro F1 0.680 / acc 0.774 vs MNE-tutorial features 0.621 / 0.729 | `reports/sleep_edf_baseline.md` |
-| A | Int8 sleep model + conversion report (REQ-ML-03/04) | **Done 2026-11-21** (draft PR #3): int8 macro F1 0.739 / acc 0.796 vs RF 0.680 / 0.774; float/int8 agreement 99.20 % (REQ-ML-03 PASS); 7,536-byte model | `scripts/train_sleep_model.py`, `eegml/sleep_model.py`, `reports/sleep_model.md`, `firmware/eeg_node/sleep_model.h` |
+| A | Int8 sleep model + conversion report (REQ-ML-03/04) | **Done 2026-11-21** (draft PR #3). Model v2, running standardisation: int8 macro F1 0.707 / acc 0.769 vs RF 0.680 / 0.774; float/int8 agreement 98.72 % (REQ-ML-03 PASS); 7,536 bytes. (v1 with whole-night stats: 0.739 / 0.796, not achievable on the device.) | `scripts/train_sleep_model.py`, `eegml/sleep_model.py`, `reports/sleep_model.md`, `firmware/eeg_node/sleep_model.h` |
 | A | Calibration ablation (REQ-FEAT-10) | **Done 2026-11-21**: whole-night stats 0.740 macro F1; first 60 s–10 min 0.45–0.46; running stats (trained that way) 0.710 | `scripts/calibration_ablation.py`, `reports/calibration_ablation.md` |
-| A | Retrain with running standardisation (task 4a) | **Proposed**, awaiting Farid's decision on REQ-FEAT-10 | `scripts/train_sleep_model.py` |
-| A | Int8 model on the XIAO (REQ-ML-04: arena used, µs per inference) | **Next** (task 4b), after Farid's review | `firmware/eeg_node/` |
+| A | Retrain with running standardisation (task 4a, REQ-FEAT-10) | **Done 2026-11-21** | `eegml/sleep_model.py` (`RunningStats`, `running_standardise`), `scripts/train_sleep_model.py` |
+| A | Int8 model on the XIAO (REQ-ML-04: arena used, µs per inference) | **In progress** (task 4b): bench sketch compiles (345 KB flash, 10 %; 30.8 KB RAM, 9 %); waiting for the board to be plugged in | `firmware/eeg_node/eeg_node.ino` |
 | B | Firmware: ADS1115 acquisition, filters, features, parity test | Not started; waits for parts | `firmware/eeg_node/` (to come) |
 | C | Oura app (OAuth2, nightly pull, sandbox) | Not started; must run on the laptop | `hub/` (to come) |
 | C | Hub stack (Mosquitto, ingest, InfluxDB, Grafana) | Not started | `hub/` (to come) |
@@ -73,12 +74,12 @@ Code: confirm each line, fix anything wrong, fill the blanks, and note the date.
 ## 4. Open questions for Farid
 
 1. ~~Review PR #1's decisions (requirements §7)~~ Accepted by merging PR #1, 2026-11-16.
-2. Have the front-end parts been ordered, and when do they arrive? The funding deck assumed a demo on Fri 2026-11-20.
+2. ~~Have the front-end parts been ordered?~~ 2026-11-21: ordered, several received. **Demo moved to 2026-11-27.** Which parts have arrived, and when is the rest due?
 3. Oura developer app: registered yet? Needs an Oura account with an active membership for a Gen3+ ring.
 4. Repository rename: GitHub still shows `3ffeisullin/tinyml` with default branch `master`.
 5. ~~Docker Desktop is not installed on the laptop, and the hub (Phase C, REQ-HUB-01) needs it. Install it on the laptop, or run the hub on the Raspberry Pi?~~ Decided 2026-11-16: install Docker Desktop on the laptop.
-6. **REQ-FEAT-10 (new 2026-11-21):** the sleep model loses most of its gain with stats from a short calibration (macro F1 0.74 → 0.45). Change REQ-FEAT-10 to a running per-session mean/SD (10-epoch warm-up; trained the same way: 0.710 vs the random forest's 0.680), keeping the 60 s calibration as a signal-quality check? Recommended: yes.
-7. **Task order (new 2026-11-21):** recommended 4a (retrain, ~1 h) → 4b (XIAO, no electrodes) → 5 (Oura app; needs the Oura developer app, Q3). 4b can also run first with the current header.
+6. ~~**REQ-FEAT-10 (new 2026-11-21):** the sleep model loses most of its gain with stats from a short calibration (macro F1 0.74 → 0.45). Change REQ-FEAT-10 to a running per-session mean/SD (10-epoch warm-up; trained the same way: 0.710 vs the random forest's 0.680), keeping the 60 s calibration as a signal-quality check?~~ **Yes** (Farid, 2026-11-21); requirement updated.
+7. ~~**Task order (new 2026-11-21):** recommended 4a (retrain, ~1 h) → 4b (XIAO, no electrodes) → 5 (Oura app; needs the Oura developer app, Q3). 4b can also run first with the current header.~~ Farid: 4a, then 4b (2026-11-21).
 
 ## 5. Next tasks (in order)
 
@@ -89,8 +90,8 @@ Code: confirm each line, fix anything wrong, fill the blanks, and note the date.
 | 3 | ~~Merge PR #1, then PR #2~~ Done 2026-11-16 (Claude Code, with Farid's one-time approval) | Farid | — |
 | 3a | ~~Run the new real-data test on the laptop: `python -m pytest tests/test_sleep_edf_real.py` should pass, not skip~~ Done 2026-11-16: passes | Claude Code | REQ-ML-01 |
 | 4 | ~~**Int8 sleep model.** New `scripts/train_sleep_model.py` reading the cached features in `data/cache/sleep_edf/` (no re-download): standardise features per subject (stands in for per-session calibration, REQ-FEAT-10); small dense network (input = current epoch's 30 features plus the previous 2 epochs', a few thousand parameters); same 5-fold leave-subjects-out split as the baseline, with the random forest as the bar to beat; post-training int8 quantisation with a representative set from training folds only; report float vs int8 accuracy, macro F1, per-stage recall, agreement (≥ 98 %), model bytes and an arena estimate in `reports/sleep_model.md`; export the int8 model to `firmware/eeg_node/sleep_model.h`. Tests for the windowing of neighbour epochs and the export.~~ Done 2026-11-21 | Claude Code (laptop, has the data) | REQ-ML-03/04, FEAT-10 |
-| 4a | **Running standardisation.** Add running (expanding, Welford) per-session mean/SD with a 10-epoch warm-up to `eegml/sleep_model.py` (params in `config.py`); train and test with it by default in `train_sleep_model.py`; re-export `sleep_model.h`; re-check agreement ≥ 98 %; test Python stats against a Welford reference. Needs Farid's yes on §4 Q6. | Claude Code | REQ-FEAT-10, ML-03 |
-| 4b | Run the exported model on the XIAO with the `eeg_smoke` pattern (embedded test epochs, print arena used and µs per inference) | Claude Code | REQ-ML-04 |
+| 4a | ~~**Running standardisation.** Add running (expanding, Welford) per-session mean/SD with a 10-epoch warm-up to `eegml/sleep_model.py` (params in `config.py`); train and test with it by default in `train_sleep_model.py`; re-export `sleep_model.h`; re-check agreement ≥ 98 %; test Python stats against a Welford reference. Needs Farid's yes on §4 Q6.~~ Done 2026-11-21 | Claude Code | REQ-FEAT-10, ML-03 |
+| 4b | Run the exported model on the XIAO with the `eeg_smoke` pattern (embedded test epochs, print arena used and µs per inference). **Sketch ready:** `firmware/eeg_node/eeg_node.ino` compiles; plug in the XIAO, upload, read the SUMMARY line. | Claude Code | REQ-ML-04, ML-06 |
 | 5 | **Oura app skeleton** in `hub/oura_app/`: plain Python first (no Docker needed): OAuth2 sign-in with a localhost callback page, encrypted token file, nightly pull + 3-day re-pull, UTC conversion, 401/429 handling, sandbox mode; tests with mocked API responses. Client ID/secret in a git-ignored `.env`. | Claude Code | REQ-OURA-01..07 |
 | 5b | Hub stack in Docker Compose (Mosquitto, ingest, InfluxDB, Grafana, Oura app) — **needs Docker Desktop installed** | Claude Code | REQ-HUB-01, OURA-08 |
 | 6 | Firmware `eeg_node`: parity test on the board using `firmware/test_vectors/` before any hardware is wired | Claude Code | REQ-FEAT-09 |
@@ -99,6 +100,8 @@ Code: confirm each line, fix anything wrong, fill the blanks, and note the date.
 ## 6. Handoff log
 
 Newest first. One line per change: date, who, what, where.
+
+- 2026-11-21 · Claude Code (laptop) · Task 4a done (Farid approved running standardisation and the order 4a → 4b). REQ-FEAT-10 rewritten: running per-session mean/SD (Welford), first 10 epochs scored with their own stats; `RunningStats`/`running_standardise` in `eegml/sleep_model.py`, `SLEEP_STANDARDISE`/`SLEEP_WARMUP_EPOCHS` in `config.py`; `train_sleep_model.py --standardise running` (default). Model v2 held-out: int8 acc 0.769 / macro F1 0.707 (recall W 0.78, N1 0.43, N2 0.78, N3 0.80, REM 0.81) vs RF 0.774 / 0.680; float/int8 agreement 98.72 %. Header v2 adds warm-up and SD-floor defines. Task 4b: `firmware/eeg_node/eeg_node.ino` (parity against the embedded outputs, µs per inference, arena used, feature-schema check for REQ-ML-06) compiles: 345,453 bytes flash (10 %), 30,816 bytes RAM (9 %); not yet run (no board connected). 3 new tests, 42 pass. Farid: parts ordered and several received; demo moved to 2026-11-27. Notion mirror updated.
 
 - 2026-11-21 · Claude Code (laptop) · Calibration ablation (`scripts/calibration_ablation.py`, `reports/calibration_ablation.md`): the task 4 model depends on whole-night stats; with stats from the first 60 s / 5 min / 10 min it falls to macro F1 0.45 / 0.46 / 0.45 (below the RF's 0.68). Running (expanding) stats, trained that way: acc 0.770 / macro F1 0.710. Proposed REQ-FEAT-10 change and task 4a (§4 Q6–Q7, §5). Brief for the cloud session and review: `docs/briefs/2026-11-21-int8-sleep-model.md`. README status, PR #3 description and Notion mirror updated.
 
