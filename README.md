@@ -16,10 +16,11 @@ Seeed XIAO ESP32-S3 with TensorFlow Lite Micro. (Qualcomm/Snapdragon work is a s
 | A · Int8 sleep model | Done in draft PR #3: running standardisation as on the device, int8 macro F1 0.707 vs 0.680 for the random forest, float/int8 agreement 98.7 % (REQ-ML-03), 6.3 KB model |
 | A · Model on the XIAO | Done: outputs match Python 5/5, 224 µs per inference, 956-byte arena (REQ-ML-04) |
 | B · Firmware (`eeg_node`) | The whole chain runs on the board: on a replayed held-out night its stages match Python on 100 % of epochs (REQ-FEAT-06/09/10). Acquisition firmware ready and verified with a fake 250 Hz source (task 7a); wiring and bring-up next (`docs/bringup.md`); parts due around 2026-11-26; demo 2026-11-27 |
+| B · Demo display | Done (task 7d, branch `feature/demo-display`): replayed night and live views, `scripts/demo_display.py` |
 | C · Oura app and hub | Oura app needed for the demo (2026-11-27), waiting on the Oura developer app registration; hub needs Docker (after the demo) |
 | D · Overnight recording | Not started |
 
-Latest work: [`docs/briefs/2026-11-22-deck-update.md`](docs/briefs/2026-11-22-deck-update.md) (summary since 2026-11-21, demo plan), [`docs/briefs/2026-11-22-acquisition.md`](docs/briefs/2026-11-22-acquisition.md), wiring-day checklist [`docs/bringup.md`](docs/bringup.md), [`docs/briefs/2026-11-21-end-to-end-replay.md`](docs/briefs/2026-11-21-end-to-end-replay.md), [`docs/briefs/2026-11-21-feature-parity.md`](docs/briefs/2026-11-21-feature-parity.md) and [`docs/briefs/2026-11-21-int8-sleep-model.md`](docs/briefs/2026-11-21-int8-sleep-model.md).
+Latest work: [`docs/briefs/2026-11-22-demo-display.md`](docs/briefs/2026-11-22-demo-display.md) (demo display), [`docs/briefs/2026-11-22-deck-update.md`](docs/briefs/2026-11-22-deck-update.md) (summary since 2026-11-21, demo plan), [`docs/briefs/2026-11-22-acquisition.md`](docs/briefs/2026-11-22-acquisition.md), wiring-day checklist [`docs/bringup.md`](docs/bringup.md), [`docs/briefs/2026-11-21-end-to-end-replay.md`](docs/briefs/2026-11-21-end-to-end-replay.md), [`docs/briefs/2026-11-21-feature-parity.md`](docs/briefs/2026-11-21-feature-parity.md) and [`docs/briefs/2026-11-21-int8-sleep-model.md`](docs/briefs/2026-11-21-int8-sleep-model.md).
 New to the project? Start with [`docs/getting-started.md`](docs/getting-started.md).
 Full state, the laptop environment, next tasks and the handoff log are in
 [`docs/STATUS.md`](docs/STATUS.md). Requirements are in
@@ -52,6 +53,7 @@ Project Status & Handoff", mirrors the status file.
 | `scripts/sleep_edf_baseline.py` | Sleep-EDF Fpz-Cz baseline: device features vs MNE-tutorial features, leave-subjects-out |
 | `eegml/sleep_model.py` | Sleep-model input (per-session standardisation, clip, previous 2 epochs), int8 conversion, C-header export |
 | `scripts/train_sleep_model.py` | Int8 sleep-stage model: same split as the baseline, float vs int8 report, exports `firmware/eeg_node/sleep_model.h` |
+| `scripts/demo_display.py` | Demo window: the board staging a replayed night next to the experts' hypnogram, or live band power and relative alpha (task 7d) |
 | `scripts/live_log.py` | Starts a live session on the XIAO (fake source or ADS1115), saves the output, summarises rate, errors and band powers |
 | `scripts/replay_night.py` | Streams a Sleep-EDF night to the XIAO over USB and compares the board's features, model outputs and stages with Python |
 | `scripts/calibration_ablation.py` | How the standardisation statistics (whole night, first minutes, running) change the model's results |
@@ -75,6 +77,8 @@ Project Status & Handoff", mirrors the status file.
 .\venv\Scripts\python.exe scripts\calibration_ablation.py            # standardisation ablation report
 .\venv\Scripts\python.exe scripts\replay_night.py --subject 20 --port COM5  # whole night through the XIAO (~7 min)
 .\venv\Scripts\python.exe scripts\live_log.py --mode fake --seconds 60     # live path with a fake 250 Hz source
+.\venv\Scripts\python.exe scripts\demo_display.py replay --port COM5       # demo: board stages a held-out night (--port none: no board)
+.\venv\Scripts\python.exe scripts\demo_display.py live --source fake       # demo: live band power (--source adc once wired)
 .\venv\Scripts\python.exe scripts\smoke_test.py
 
 # Board side (or open firmware/eeg_smoke in Arduino IDE, board "XIAO_ESP32S3")
