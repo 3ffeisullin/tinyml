@@ -17,7 +17,7 @@ import numpy as np
 
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT))
-from eegml import config, filters  # noqa: E402
+from eegml import acquisition, config, filters  # noqa: E402
 from eegml.features import FEATURE_NAMES, sliding_features  # noqa: E402
 
 VERSION = 1
@@ -87,6 +87,15 @@ def config_header() -> str:
              "static const float EEG_BAND_LO[EEG_N_BANDS] = {" + ", ".join(flit(lo) for lo, _ in config.BANDS.values()) + "};",
              "static const float EEG_BAND_HI[EEG_N_BANDS] = {" + ", ".join(flit(hi) for _, hi in config.BANDS.values()) + "};",
              "// Window feature order: " + ", ".join(names),
+             "// ADS1115 front end (REQ-HW-02/03, REQ-ACQ-01/02); config words from eegml/acquisition.py.",
+             f"#define EEG_ADC_I2C_ADDR 0x{config.ADC_I2C_ADDR:02X}",
+             f"#define EEG_ADC_I2C_HZ {config.ADC_I2C_HZ}",
+             f"#define EEG_ADC_SPS {config.ADC_SPS}",
+             f"#define EEG_ADC_CONFIG_DIFF 0x{acquisition.CONFIG_DIFF:04X}  // A0-A1, +-{config.ADC_PGA_FS_V:g} V, {config.ADC_SPS} SPS, RDY",
+             f"#define EEG_ADC_CONFIG_SINGLE 0x{acquisition.CONFIG_SINGLE:04X}  // A0-GND, +-{config.ADC_FALLBACK_PGA_FS_V:g} V (fallback)",
+             f"#define EEG_ADC_LSB_UV_DIFF {flit(acquisition.lsb_uv(config.ADC_PGA_FS_V))}",
+             f"#define EEG_ADC_LSB_UV_SINGLE {flit(acquisition.lsb_uv(config.ADC_FALLBACK_PGA_FS_V))}",
+             f"#define EEG_PILL_GAIN {flit(config.PILL_GAIN)}  // PLACEHOLDER until bench calibration (REQ-ACQ-01)",
              "// Filter chain (b0, b1, b2, a0, a1, a2 per section): notches, high-pass, low-pass.",
              "// Double precision: float32 coefficients and state put skew out of tolerance on the board",
              "// (the 0.5 Hz high-pass poles sit close to the unit circle). Found in task 6, 2026-11-21.",

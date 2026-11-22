@@ -43,6 +43,7 @@ class EpochFeatures {
     adc_fs_ = adc_full_scale_uv;
     n_ = 0;
     epochs_ = 0;
+    new_window_ = false;
     reset_epoch();
   }
 
@@ -54,6 +55,7 @@ class EpochFeatures {
     n_++;
     if (n_ >= EEG_WIN && (n_ - EEG_WIN) % EEG_HOP == 0) {
       const long start = n_ - EEG_WIN;
+      compute_window();  // every window, for the 1 s live output
       // Only windows that lie fully inside one epoch count (REQ-FEAT-06, decision D-2).
       if (start / EEG_EPOCH == (start + EEG_WIN - 1) / EEG_EPOCH) add_window();
     }
@@ -67,6 +69,16 @@ class EpochFeatures {
 
   long epochs() const { return epochs_; }
   int last_window_count() const { return last_windows_; }
+  long samples() const { return n_; }
+
+  // The newest 1 s window's features, once per window (start sample in *start).
+  bool take_window(float out[EEG_N_FEATURES], long* start = nullptr) {
+    if (!new_window_) return false;
+    new_window_ = false;
+    memcpy(out, win_, sizeof win_);
+    if (start) *start = win_start_;
+    return true;
+  }
 
  private:
   void reset_epoch() {
@@ -77,15 +89,20 @@ class EpochFeatures {
     windows_ = 0;
   }
 
-  void add_window() {
+  void compute_window() {
     const int head = (int)(n_ % EEG_WIN);  // oldest sample of the last EEG_WIN
     for (int i = 0; i < EEG_WIN; i++) {
       const int k = (head + i) % EEG_WIN;
       wraw_[i] = raw_[k];
       wfilt_[i] = filt_[k];
     }
-    float f[EEG_N_FEATURES];
-    wf_->compute(wfilt_, wraw_, line_freq_, adc_fs_, f);
+    wf_->compute(wfilt_, wraw_, line_freq_, adc_fs_, win_);
+    win_start_ = n_ - EEG_WIN;
+    new_window_ = true;
+  }
+
+  void add_window() {
+    const float* f = win_;
     for (int i = 0; i < kSummarised; i++) {
       const double v = f[summarised_index(i)];
       sum_[i] += v;
@@ -115,6 +132,9 @@ class EpochFeatures {
   float line_freq_ = 60.0f, adc_fs_ = 0.0f;
   long n_ = 0, epochs_ = 0;
   float raw_[EEG_WIN], filt_[EEG_WIN], wraw_[EEG_WIN], wfilt_[EEG_WIN];
+  float win_[EEG_N_FEATURES];
+  long win_start_ = 0;
+  bool new_window_ = false;
   double sum_[kSummarised], sumsq_[kSummarised], line_sum_;
   float ptp_max_;
   int windows_ = 0, last_windows_ = 0;

@@ -18,11 +18,11 @@ updated to match.
 | ID | Requirement | Phase | Verify | Status |
 |---|---|---|---|---|
 | REQ-HW-01 | The front end shall be one BioAmp EXG Pill, one ADS1115 and the XIAO ESP32-S3, all powered from the XIAO's 3.3 V rail; no boost converter or level-shifting divider. | B | Wiring check against the wiring document | Open |
-| REQ-HW-02 | The ADS1115 shall read the Pill differentially, OUT on A0 against a 1.65 V reference on A1 (R1 = R2 = 10 kΩ, C1 = 100 nF), PGA ±2.048 V; fallback single-ended A0 at ±4.096 V. | B | Bring-up test 1–2 (shorted-input noise, 10 Hz test tone) | Open |
-| REQ-HW-03 | Pins: SDA D4/GPIO5, SCL D5/GPIO6 at 400 kHz, ALERT/RDY D1/GPIO2 as data-ready interrupt, I2C address 0x48. | B | Firmware boot self-test finds the ADC | Open |
-| REQ-ACQ-01 | Samples shall be converted to microvolts at the electrode (ADC counts × LSB ÷ Pill gain) before any processing; the gain constant shall be set from bench calibration. | B | Known 10 Hz test signal reads back at its applied amplitude ±10 % | Open |
-| REQ-ACQ-02 | Sampling shall run at 250 SPS paced by the ADC's data-ready signal, with no dropped or duplicated samples over 8 h. | B | Sample counter vs. wall clock over an overnight run | Open |
-| REQ-ACQ-03 | Acquisition shall run in a core-0 task that never waits on Wi-Fi, TLS or flash. | B | Inject a 10 s broker outage; sample count unaffected | Open |
+| REQ-HW-02 | The ADS1115 shall read the Pill differentially, OUT on A0 against a 1.65 V reference on A1 (R1 = R2 = 10 kΩ, C1 = 100 nF), PGA ±2.048 V; fallback single-ended A0 at ±4.096 V. | B | Bring-up test 1–2 (shorted-input noise, 10 Hz test tone) | Open; firmware ready (config words `0x04A0` / `0x42A0` in `eegml/acquisition.py`, tested); bring-up tests 1–2 in `docs/bringup.md` wait for the parts |
+| REQ-HW-03 | Pins: SDA D4/GPIO5, SCL D5/GPIO6 at 400 kHz, ALERT/RDY D1/GPIO2 as data-ready interrupt, I2C address 0x48. | B | Firmware boot self-test finds the ADC | Open; firmware ready (`firmware/eeg_node/acquisition.h`; boot prints whether the ADC is found); waits for the parts |
+| REQ-ACQ-01 | Samples shall be converted to microvolts at the electrode (ADC counts × LSB ÷ Pill gain) before any processing; the gain constant shall be set from bench calibration. | B | Known 10 Hz test signal reads back at its applied amplitude ±10 % | Open; conversion in firmware, `PILL_GAIN` is a placeholder (1000) until the bench calibration in `docs/bringup.md` step 5 |
+| REQ-ACQ-02 | Sampling shall run at 250 SPS paced by the ADC's data-ready signal, with no dropped or duplicated samples over 8 h. | B | Sample counter vs. wall clock over an overnight run | Open; data-ready-paced task written; through the same path, a fake 250 Hz source ran 335 s on the XIAO with 0 missed samples (2026-11-22). Real ADC rate (oscillator ±10 %) to be measured |
+| REQ-ACQ-03 | Acquisition shall run in a core-0 task that never waits on Wi-Fi, TLS or flash. | B | Inject a 10 s broker outage; sample count unaffected | Partial (2026-11-22): acquisition task pinned to core 0 at the highest priority, independent of processing on core 1; Wi-Fi/MQTT not written yet, so the outage test waits |
 
 ## 2. Signal processing and features
 

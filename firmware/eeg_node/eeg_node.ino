@@ -18,8 +18,20 @@
 //                              any "OUT t stage q0..q4" now ready, then "ACK e <us>"
 //      END                     flush a session shorter than the warm-up -> "DONE <epochs>"
 //      TEST                    re-run checks 1 and 2
-// Self-tests run at boot and end with "READY". No sensor or electrodes are needed.
+// 4. Live (task 7a): samples from the core-0 acquisition task (acquisition.h), 60 Hz chain.
+//      LIVE ADC | LIVE ADC SE  ADS1115 differential A0-A1 (or fallback single-ended A0)
+//      LIVE FAKE               a 250 Hz timer replays the reference signal through the same
+//                              task and queue; the first 11 windows are checked against Python
+//      STOP
+//    Output: "W <t_end_s> logp_delta..logp_gamma rel_alpha ptp_uv line_ratio clip_frac" every
+//    second, "EPOCH e windows" + "OUT t stage q0..q4" every 30 s (after the 10-epoch warm-up),
+//    "STAT ..." every 10 s, "FAKE PARITY ..." once in fake mode.
+// SAFETY (REQ-SAFE-01..03): with electrodes on a person, the XIAO runs from its LiPo only, or
+// USB goes through the isolator, or the laptop runs on battery. REQ-SAFE-02 (refuse to record
+// while USB VBUS is present) needs a VBUS sense pin that the design doesn't have yet.
+// Self-tests run at boot and end with "READY". No sensor or electrodes are needed for 1-3.
 #include <Chirale_TensorFlowLite.h>
+#include "acquisition.h"
 #include "eeg_config.h"
 #include "eeg_features.h"
 #include "eeg_pipeline.h"
@@ -232,6 +244,86 @@ void replay_epoch() {
   Serial.printf("ACK %ld %lu\n", e, (unsigned long)(micros() - t0));
 }
 
+// ---------------- live ----------------
+acq::Acquisition acquisition;
+bool live = false, live_fake = false;
+int fake_checked = 0, fake_bad = 0;
+float fake_worst = 0;
+uint32_t last_stat_ms = 0;
+
+void live_start(acq::Source s) {
+  const bool single = s == acq::Source::AdcSingleEnded;
+  const float clip_fs = s == acq::Source::Fake ? 0.0f : acq::Acquisition::full_scale_uv(single);
+  epoch_features.begin(EEG_SOS_60, EEG_N_SOS_60, 60.0f, clip_fs);
+  model_input.reset();
+  fake_checked = fake_bad = 0;
+  fake_worst = 0;
+  if (!acquisition.start(s)) {
+    live = false;
+    Serial.println(acquisition.adc_present() ? "ERR ADC did not accept the configuration"
+                                             : "ERR ADC not found at 0x48 (try LIVE FAKE)");
+    return;
+  }
+  live = true;
+  live_fake = s == acq::Source::Fake;
+  last_stat_ms = millis();
+  Serial.printf("OK LIVE %s, 60 Hz chain, %.4g uV/count, gain %.0f (placeholder)\n",
+                live_fake ? "FAKE" : (single ? "ADC single-ended A0 +-4.096 V" : "ADC A0-A1 +-2.048 V"),
+                live_fake ? 0.0f : acq::Acquisition::uv_per_count(single), EEG_PILL_GAIN);
+}
+
+void live_stop() {
+  acquisition.stop();
+  model_input.finish(run_model);
+  live = false;
+  Serial.println("OK STOP");
+}
+
+void print_stats() {
+  const acq::Stats& s = acquisition.stats();
+  Serial.printf("STAT samples %lu rate %.2f Hz missed %lu i2c_errors %lu queue_full %lu timeouts %lu epochs %ld\n",
+                (unsigned long)s.samples, acquisition.rate_hz(), (unsigned long)s.missed,
+                (unsigned long)s.i2c_errors, (unsigned long)s.queue_full, (unsigned long)s.timeouts,
+                epoch_features.epochs());
+}
+
+void check_fake_window(long start, const float* w) {
+  if (!live_fake || fake_checked >= TV_N_WINDOWS || start != (long)fake_checked * EEG_HOP) return;
+  for (int f = 0; f < EEG_N_FEATURES; f++) {
+    const float r = tolerance_ratio(f, w[f], tv_features[fake_checked * TV_N_FEATURES + f]);
+    fake_worst = fmaxf(fake_worst, r);
+    if (r > 1.0f) fake_bad++;
+  }
+  if (++fake_checked == TV_N_WINDOWS)
+    Serial.printf("FAKE PARITY %s: %d live windows vs Python, %d feature values out of tolerance, worst %.3f of tolerance\n",
+                  fake_bad ? "FAIL" : "PASS", TV_N_WINDOWS, fake_bad, fake_worst);
+}
+
+void live_poll() {
+  float uv, f[eeg::kEpochFeatures], w[EEG_N_FEATURES];
+  long start;
+  int budget = 64;  // keep serial commands responsive
+  bool any = false;
+  while (budget-- > 0 && acquisition.next(&uv)) {
+    any = true;
+    if (epoch_features.push(uv, f)) {
+      Serial.printf("EPOCH %ld %d\n", epoch_features.epochs() - 1, epoch_features.last_window_count());
+      model_input.push(f, run_model);
+    }
+    if (epoch_features.take_window(w, &start)) {
+      Serial.printf("W %.0f", (start + EEG_WIN) / EEG_FS);
+      for (int b = 0; b < EEG_N_BANDS; b++) Serial.printf(" %.3f", w[eeg::F_LOGP + b]);
+      Serial.printf(" %.3f %.1f %.3f %.3f\n", w[eeg::F_REL + eeg::B_ALPHA], w[eeg::F_PTP], w[eeg::F_LINE], w[eeg::F_CLIP]);
+      check_fake_window(start, w);
+    }
+  }
+  if (millis() - last_stat_ms >= 10000) {
+    last_stat_ms = millis();
+    print_stats();
+  }
+  if (!any) delay(1);
+}
+
 void self_tests() {
   Serial.printf("Vectors v%d: %d samples, %d windows x %d features\n", TV_VERSION, TV_N_SAMPLES,
                 TV_N_WINDOWS, TV_N_FEATURES);
@@ -247,14 +339,31 @@ void setup() {
   Serial.println("\n=== eeg_node: feature parity + sleep-model bench + replay ===");
   model_setup();
   self_tests();
+  if (!acquisition.begin()) halt("acquisition task did not start");
+  Serial.printf("ADC %s at 0x%02X (SDA GPIO%d, SCL GPIO%d, RDY GPIO%d)\n",
+                acquisition.adc_present() ? "found" : "NOT found", EEG_ADC_I2C_ADDR, acq::kPinSda,
+                acq::kPinScl, acq::kPinRdy);
   Serial.println("READY");
 }
 
 void loop() {
-  if (!Serial.available()) { delay(1); return; }
+  if (live) live_poll();
+  if (!Serial.available()) { if (!live) delay(1); return; }
   String cmd = Serial.readStringUntil('\n');
   cmd.trim();
-  if (cmd == "EPOCH") {
+  if (live && cmd != "STOP" && cmd != "STAT") {
+    Serial.println("ERR live mode is running; send STOP first");
+  } else if (cmd == "STOP") {
+    live_stop();
+  } else if (cmd == "STAT") {
+    print_stats();
+  } else if (cmd == "LIVE FAKE") {
+    live_start(acq::Source::Fake);
+  } else if (cmd == "LIVE ADC") {
+    live_start(acq::Source::Adc);
+  } else if (cmd == "LIVE ADC SE") {
+    live_start(acq::Source::AdcSingleEnded);
+  } else if (cmd == "EPOCH") {
     replay_epoch();
   } else if (cmd.startsWith("BEGIN")) {
     const float line = cmd.length() > 6 ? cmd.substring(6).toFloat() : 60.0f;

@@ -16,6 +16,15 @@
 static const float EEG_BAND_LO[EEG_N_BANDS] = {0.5f, 4.5f, 8.5f, 11.5f, 15.5f, 30.0f};
 static const float EEG_BAND_HI[EEG_N_BANDS] = {4.5f, 8.5f, 11.5f, 15.5f, 30.0f, 45.0f};
 // Window feature order: logp_delta, logp_theta, logp_alpha, logp_sigma, logp_beta, logp_gamma, rel_delta, rel_theta, rel_alpha, rel_sigma, rel_beta, rel_gamma, ratio_delta_beta, ratio_alpha_beta, ratio_theta_alpha, skew, kurtosis, q_ptp_uv, q_line_ratio, q_clip_frac
+// ADS1115 front end (REQ-HW-02/03, REQ-ACQ-01/02); config words from eegml/acquisition.py.
+#define EEG_ADC_I2C_ADDR 0x48
+#define EEG_ADC_I2C_HZ 400000
+#define EEG_ADC_SPS 250
+#define EEG_ADC_CONFIG_DIFF 0x04A0  // A0-A1, +-2.048 V, 250 SPS, RDY
+#define EEG_ADC_CONFIG_SINGLE 0x42A0  // A0-GND, +-4.096 V (fallback)
+#define EEG_ADC_LSB_UV_DIFF 62.5f
+#define EEG_ADC_LSB_UV_SINGLE 125.0f
+#define EEG_PILL_GAIN 1000.0f  // PLACEHOLDER until bench calibration (REQ-ACQ-01)
 // Filter chain (b0, b1, b2, a0, a1, a2 per section): notches, high-pass, low-pass.
 // Double precision: float32 coefficients and state put skew out of tolerance on the board
 // (the 0.5 Hz high-pass poles sit close to the unit circle). Found in task 6, 2026-11-21.
