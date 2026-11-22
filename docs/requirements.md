@@ -39,7 +39,7 @@ All parameters live in `eegml/config.py`; the firmware shall use the same values
 | REQ-FEAT-07 | Epochs shall be aligned to UTC 30 s boundaries on the device. | B | Epoch timestamps are multiples of 30 s | Open |
 | REQ-FEAT-08 | Each window shall carry quality metrics: filtered peak-to-peak (µV), mains-to-signal power ratio on the unfiltered window, and fraction of samples within 2 % of ADC full scale. Thresholds for flags shall be set from the session's calibration recording. | A (metrics), B (flags) | `test_line_noise_metric_sees_unfiltered_hum`, `test_clip_fraction` | Metrics done |
 | REQ-FEAT-09 | The firmware's filtered samples and features shall match `tests/vectors/feature_vectors_v1.json` within 1e-3 relative (log powers within 0.01) when fed the same raw samples. | A (vectors), B (device test) | `tests/test_vectors.py`; on-device parity sketch using `firmware/test_vectors/feature_vectors_v1.h` | Vectors done |
-| REQ-FEAT-10 | Features should be standardised per session from a ~60 s calibration recording before the model sees them. | B | Calibrate state stores mean/SD; model input logged | Open |
+| REQ-FEAT-10 | Features should be standardised per session from a ~60 s calibration recording before the model sees them. | B | Calibrate state stores mean/SD; model input logged | Open (simulated offline 2026-11-21 with whole-night per-subject stats, `eegml/sleep_model.py`; device calibration is Phase B) |
 | REQ-FEAT-11 | HMM state features (state means, SDs, time in state) on the per-second band-power series should be evaluated as extra sleep features. | A | Ablation in the Sleep-EDF baseline | Open |
 
 ## 3. Machine learning
@@ -48,8 +48,8 @@ All parameters live in `eegml/config.py`; the firmware shall use the same values
 |---|---|---|---|---|
 | REQ-ML-01 | Models shall be developed on Sleep-EDF's `EEG Fpz-Cz` channel (closest public match to the Fp1–mastoid headband), resampled to 250 Hz and run through the same feature pipeline as the device. | A | `scripts/sleep_edf_baseline.py`; `tests/test_sleep_edf.py` | Done (first run 2026-11-16, 20 subjects) |
 | REQ-ML-02 | Sleep-stage models (W, N1, N2, N3, REM) shall be evaluated with leave-subjects-out cross-validation and shall at least match the MNE tutorial's feature set under the same split, reporting accuracy, macro F1, per-stage recall and the confusion matrix. Reference: MNE tutorial 68.7 % accuracy, macro F1 0.57 (two EEG channels, one train / one test subject). | A | `reports/sleep_edf_baseline.md` | Done (2026-11-16: device macro F1 0.680 vs 0.621, accuracy 0.774 vs 0.729) |
-| REQ-ML-03 | Models shall be quantised to int8; the int8 model shall agree with the float model on ≥ 98 % of held-out epochs, with both results reported. | A | Conversion script report | Open |
-| REQ-ML-04 | The deployed model shall fit in 64 KB of flash and a 32 KB tensor arena, and run in under 50 ms per epoch on the ESP32-S3. | B | Serial log from the device (arena used, µs per inference) | Open |
+| REQ-ML-03 | Models shall be quantised to int8; the int8 model shall agree with the float model on ≥ 98 % of held-out epochs, with both results reported. | A | Conversion script report | Done (2026-11-21: 99.20 % agreement on held-out epochs, `reports/sleep_model.md`) |
+| REQ-ML-04 | The deployed model shall fit in 64 KB of flash and a 32 KB tensor arena, and run in under 50 ms per epoch on the ESP32-S3. | B | Serial log from the device (arena used, µs per inference) | Open (on paper 2026-11-21: 7,536-byte model, ~3.2 KB arena estimate; device run is task 4b) |
 | REQ-ML-05 | An artifact detector shall gate the sleep model; flagged epochs are excluded from staging and counted. | A, B | Artifact fraction in epoch records | Open |
 | REQ-ML-06 | Each model shall carry a version and the feature-schema version it expects; firmware shall refuse a mismatch. | B | Load a model with the wrong schema; device rejects it | Open |
 

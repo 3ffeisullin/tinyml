@@ -44,3 +44,10 @@ class FilterSpec:
     lp_hz: float = 45.0
     lp_order: int = 4
     extra: dict = field(default_factory=dict)
+
+# REQ-FEAT-10, REQ-ML-03: sleep-model input. Each epoch's features are z-scored
+# with the session's calibration mean/SD, clipped, then the previous epochs are
+# appended: input = [t, t-1, ..., t-SLEEP_NEIGHBOURS].
+SLEEP_NEIGHBOURS = 2
+SLEEP_INPUT_CLIP = 6.0      # standardised units
+SLEEP_SD_FLOOR = 1e-6
