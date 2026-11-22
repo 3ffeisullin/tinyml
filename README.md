@@ -3,18 +3,20 @@
 Train an EEG pattern-recognition model on the PC, quantize it to INT8 TFLite, and run it on a
 Seeed XIAO ESP32-S3 with TensorFlow Lite Micro. (Qualcomm/Snapdragon work is a separate project.)
 
-## Project status (2026-11-16)
+## Project status (2026-11-21)
 
 | Phase | State |
 |---|---|
 | Toolchain smoke test on the XIAO | Done (2026-11-05) |
 | A · Requirements, Python reference features, test vectors | Done (merged 2026-11-16) |
 | A · Sleep-EDF baseline | Done: device features macro F1 0.680 vs 0.621 for the MNE tutorial's (REQ-ML-02 pass) |
-| A · Int8 sleep model | Next: draft PR #3 |
+| A · Int8 sleep model | Done in draft PR #3: int8 macro F1 0.739 vs 0.680 for the random forest, float/int8 agreement 99.2 % (REQ-ML-03), 7.5 KB model. Needs running standardisation before deployment (see the brief below) |
+| A · Model on the XIAO | Next (task 4b) |
 | B · Firmware (`eeg_node`) | Not started; waits for parts |
 | C · Oura app and hub | Not started; Oura app after the int8 model, hub needs Docker |
 | D · Overnight recording | Not started |
 
+Latest work: [`docs/briefs/2026-11-21-int8-sleep-model.md`](docs/briefs/2026-11-21-int8-sleep-model.md).
 New to the project? Start with [`docs/getting-started.md`](docs/getting-started.md).
 Full state, the laptop environment, next tasks and the handoff log are in
 [`docs/STATUS.md`](docs/STATUS.md). Requirements are in
@@ -45,6 +47,11 @@ Project Status & Handoff", mirrors the status file.
 | `docs/requirements.md` | Numbered requirements with how each is verified; the reference for code and tests |
 | `eegml/` | Python reference signal processing: filters, band powers (incl. sigma), skew, kurtosis, quality metrics, 30 s epochs |
 | `scripts/sleep_edf_baseline.py` | Sleep-EDF Fpz-Cz baseline: device features vs MNE-tutorial features, leave-subjects-out |
+| `eegml/sleep_model.py` | Sleep-model input (per-session standardisation, clip, previous 2 epochs), int8 conversion, C-header export |
+| `scripts/train_sleep_model.py` | Int8 sleep-stage model: same split as the baseline, float vs int8 report, exports `firmware/eeg_node/sleep_model.h` |
+| `scripts/calibration_ablation.py` | How the standardisation statistics (whole night, first minutes, running) change the model's results |
+| `reports/` | Baseline, sleep-model and calibration-ablation reports |
+| `firmware/eeg_node/` | Generated `sleep_model.h` (int8 model, quantisation constants, test epochs); node firmware to come |
 | `scripts/export_test_vectors.py` | Writes reference vectors for checking the firmware against Python |
 | `tests/` | `pytest` suite (filters, features, epochs, vectors, Sleep-EDF path) |
 | `firmware/test_vectors/` | Generated C header of the reference vectors |
@@ -59,6 +66,8 @@ Project Status & Handoff", mirrors the status file.
 .\venv\Scripts\python.exe -m pytest                                 # all tests
 .\venv\Scripts\python.exe scripts\sleep_edf_baseline.py --subjects 20  # downloads Sleep-EDF, writes reports\
 .\venv\Scripts\python.exe scripts\export_test_vectors.py             # after any change to eegml/
+.\venv\Scripts\python.exe scripts\train_sleep_model.py               # cached features only; writes reports\ and firmware\eeg_node\sleep_model.h
+.\venv\Scripts\python.exe scripts\calibration_ablation.py            # standardisation ablation report
 .\venv\Scripts\python.exe scripts\smoke_test.py
 
 # Board side (or open firmware/eeg_smoke in Arduino IDE, board "XIAO_ESP32S3")

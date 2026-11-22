@@ -9,8 +9,9 @@ before starting, and update it before you stop.
 
 - **master** is at `309a1bf` (PRs #1 and #2 merged 2026-11-16). 32 tests pass on the laptop.
 - **Active branch:** `feature/int8-sleep-model` (draft PR #3). Task 4 is done on it (2026-11-21); 39 tests pass.
-- **Waiting on Farid:** review of PR #3 / `reports/sleep_model.md` before task 4b.
-- **Next work:** task 4b (run `firmware/eeg_node/sleep_model.h` on the XIAO), then task 5 (Oura app skeleton).
+- **Read first:** `docs/briefs/2026-11-21-int8-sleep-model.md` (results, insights, decisions, next steps).
+- **Waiting on Farid:** review of PR #3; decision on REQ-FEAT-10 (running standardisation, §4 Q6); task order (§4 Q7).
+- **Next work (recommended):** task 4a (retrain with running standardisation), task 4b (model on the XIAO), then task 5 (Oura app skeleton).
 - **Waiting on Farid:** Docker Desktop install (needed before task 5b, the hub stack), parts order status, Oura developer app registration.
 
 ## 1. Who works where
@@ -36,6 +37,8 @@ before starting, and update it before you stop.
 | A | Firmware test vectors | Done (merged 2026-11-16) | `tests/vectors/`, `firmware/test_vectors/` |
 | A | Sleep-EDF baseline (REQ-ML-02) | **Done 2026-11-16, PASS**: 20 subjects, device features macro F1 0.680 / acc 0.774 vs MNE-tutorial features 0.621 / 0.729 | `reports/sleep_edf_baseline.md` |
 | A | Int8 sleep model + conversion report (REQ-ML-03/04) | **Done 2026-11-21** (draft PR #3): int8 macro F1 0.739 / acc 0.796 vs RF 0.680 / 0.774; float/int8 agreement 99.20 % (REQ-ML-03 PASS); 7,536-byte model | `scripts/train_sleep_model.py`, `eegml/sleep_model.py`, `reports/sleep_model.md`, `firmware/eeg_node/sleep_model.h` |
+| A | Calibration ablation (REQ-FEAT-10) | **Done 2026-11-21**: whole-night stats 0.740 macro F1; first 60 s–10 min 0.45–0.46; running stats (trained that way) 0.710 | `scripts/calibration_ablation.py`, `reports/calibration_ablation.md` |
+| A | Retrain with running standardisation (task 4a) | **Proposed**, awaiting Farid's decision on REQ-FEAT-10 | `scripts/train_sleep_model.py` |
 | A | Int8 model on the XIAO (REQ-ML-04: arena used, µs per inference) | **Next** (task 4b), after Farid's review | `firmware/eeg_node/` |
 | B | Firmware: ADS1115 acquisition, filters, features, parity test | Not started; waits for parts | `firmware/eeg_node/` (to come) |
 | C | Oura app (OAuth2, nightly pull, sandbox) | Not started; must run on the laptop | `hub/` (to come) |
@@ -74,6 +77,8 @@ Code: confirm each line, fix anything wrong, fill the blanks, and note the date.
 3. Oura developer app: registered yet? Needs an Oura account with an active membership for a Gen3+ ring.
 4. Repository rename: GitHub still shows `3ffeisullin/tinyml` with default branch `master`.
 5. ~~Docker Desktop is not installed on the laptop, and the hub (Phase C, REQ-HUB-01) needs it. Install it on the laptop, or run the hub on the Raspberry Pi?~~ Decided 2026-11-16: install Docker Desktop on the laptop.
+6. **REQ-FEAT-10 (new 2026-11-21):** the sleep model loses most of its gain with stats from a short calibration (macro F1 0.74 → 0.45). Change REQ-FEAT-10 to a running per-session mean/SD (10-epoch warm-up; trained the same way: 0.710 vs the random forest's 0.680), keeping the 60 s calibration as a signal-quality check? Recommended: yes.
+7. **Task order (new 2026-11-21):** recommended 4a (retrain, ~1 h) → 4b (XIAO, no electrodes) → 5 (Oura app; needs the Oura developer app, Q3). 4b can also run first with the current header.
 
 ## 5. Next tasks (in order)
 
@@ -84,6 +89,7 @@ Code: confirm each line, fix anything wrong, fill the blanks, and note the date.
 | 3 | ~~Merge PR #1, then PR #2~~ Done 2026-11-16 (Claude Code, with Farid's one-time approval) | Farid | — |
 | 3a | ~~Run the new real-data test on the laptop: `python -m pytest tests/test_sleep_edf_real.py` should pass, not skip~~ Done 2026-11-16: passes | Claude Code | REQ-ML-01 |
 | 4 | ~~**Int8 sleep model.** New `scripts/train_sleep_model.py` reading the cached features in `data/cache/sleep_edf/` (no re-download): standardise features per subject (stands in for per-session calibration, REQ-FEAT-10); small dense network (input = current epoch's 30 features plus the previous 2 epochs', a few thousand parameters); same 5-fold leave-subjects-out split as the baseline, with the random forest as the bar to beat; post-training int8 quantisation with a representative set from training folds only; report float vs int8 accuracy, macro F1, per-stage recall, agreement (≥ 98 %), model bytes and an arena estimate in `reports/sleep_model.md`; export the int8 model to `firmware/eeg_node/sleep_model.h`. Tests for the windowing of neighbour epochs and the export.~~ Done 2026-11-21 | Claude Code (laptop, has the data) | REQ-ML-03/04, FEAT-10 |
+| 4a | **Running standardisation.** Add running (expanding, Welford) per-session mean/SD with a 10-epoch warm-up to `eegml/sleep_model.py` (params in `config.py`); train and test with it by default in `train_sleep_model.py`; re-export `sleep_model.h`; re-check agreement ≥ 98 %; test Python stats against a Welford reference. Needs Farid's yes on §4 Q6. | Claude Code | REQ-FEAT-10, ML-03 |
 | 4b | Run the exported model on the XIAO with the `eeg_smoke` pattern (embedded test epochs, print arena used and µs per inference) | Claude Code | REQ-ML-04 |
 | 5 | **Oura app skeleton** in `hub/oura_app/`: plain Python first (no Docker needed): OAuth2 sign-in with a localhost callback page, encrypted token file, nightly pull + 3-day re-pull, UTC conversion, 401/429 handling, sandbox mode; tests with mocked API responses. Client ID/secret in a git-ignored `.env`. | Claude Code | REQ-OURA-01..07 |
 | 5b | Hub stack in Docker Compose (Mosquitto, ingest, InfluxDB, Grafana, Oura app) — **needs Docker Desktop installed** | Claude Code | REQ-HUB-01, OURA-08 |
@@ -93,6 +99,8 @@ Code: confirm each line, fix anything wrong, fill the blanks, and note the date.
 ## 6. Handoff log
 
 Newest first. One line per change: date, who, what, where.
+
+- 2026-11-21 · Claude Code (laptop) · Calibration ablation (`scripts/calibration_ablation.py`, `reports/calibration_ablation.md`): the task 4 model depends on whole-night stats; with stats from the first 60 s / 5 min / 10 min it falls to macro F1 0.45 / 0.46 / 0.45 (below the RF's 0.68). Running (expanding) stats, trained that way: acc 0.770 / macro F1 0.710. Proposed REQ-FEAT-10 change and task 4a (§4 Q6–Q7, §5). Brief for the cloud session and review: `docs/briefs/2026-11-21-int8-sleep-model.md`. README status, PR #3 description and Notion mirror updated.
 
 - 2026-11-21 · Claude Code (laptop) · Task 4 done on `feature/int8-sleep-model` (draft PR #3; REQ-ML-03 Done, REQ-ML-04 on paper). `scripts/train_sleep_model.py` reads the 20 cached subjects (no download); input = 30 device features z-scored per subject (whole night, stand-in for REQ-FEAT-10 calibration), clipped ±6, plus the previous 2 epochs (90 values); Dense 32-16-5, 3,525 params; same 5-fold GroupKFold as the baseline. Held-out: float and int8 both acc 0.796 / macro F1 0.739 (recall W 0.83, N1 0.50, N2 0.80, N3 0.84, REM 0.81) vs baseline RF 0.774 / 0.680; float/int8 agreement 99.20 %. An RF on the same standardised + stacked input gets 0.813 / 0.737, so the gain is mostly the input design; the net wins on N1 recall (0.50 vs 0.31) and size. Final model (all subjects, 11 epochs): 7,536 bytes, arena estimate 3,156 bytes (7,168 allocated in the header). New `eegml/sleep_model.py` (shared input pipeline + export), params in `eegml/config.py` (`SLEEP_*`), `reports/sleep_model.md/.json`, `firmware/eeg_node/sleep_model.h` (with one int8 test epoch per stage + expected outputs), `tests/test_sleep_model.py`; 39 tests pass. Test vectors regenerated: only ~1e-11 float noise, not re-committed. Notion mirror updated.
 
