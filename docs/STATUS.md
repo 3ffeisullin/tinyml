@@ -8,12 +8,12 @@ before starting, and update it before you stop.
 ## 0. Resume here
 
 - **master** is at `309a1bf` (PRs #1 and #2 merged 2026-11-16). Nothing merged since.
-- **Active branch:** `feature/int8-sleep-model` (draft PR #3, for Farid's review). Tasks 4, 4a and 4b are done on it; 42 tests pass.
-- **Read first:** `docs/briefs/2026-11-21-int8-sleep-model.md` (results, insights, the two TFLM pitfalls found on the board, next steps).
-- **Result:** the int8 sleep model (v2, running standardisation) runs on the XIAO: outputs match Python 5/5, 224 µs per inference, 956-byte arena, 6,336-byte model. REQ-ML-03 and REQ-ML-04 are Done.
-- **Demo:** 2026-11-27. In hand: resistors, capacitors, electrodes. Ordered, not yet here: the rest (BioAmp EXG Pill, ADS1115, etc.), so task 7 waits for them; tasks 6 and 6b don't.
-- **Next work (recommended for the demo):** task 6 (feature parity on the board with `firmware/test_vectors/`), then task 6b (running standardisation + neighbour buffer + model on the board, end to end from raw samples), then task 7 (ADS1115 acquisition with the parts that have arrived). Task 5 (Oura app) runs alongside only if the demo needs Oura data.
-- **Waiting on Farid:** PR #3 review; arrival dates for the Pill and ADS1115; whether the demo shows Oura data; where "G:" is (not visible on the laptop, §4 Q8); Docker Desktop install (task 5b); Oura developer app registration.
+- **Active branch:** `feature/int8-sleep-model` (draft PR #3, for Farid's review). Tasks 4, 4a, 4b and 6 are done on it; 44 tests pass.
+- **Read first:** `docs/briefs/2026-11-21-feature-parity.md` (task 6, demo plan), then `docs/briefs/2026-11-21-int8-sleep-model.md` (model).
+- **On the XIAO:** filters and all 20 window features match Python (REQ-FEAT-09 Done); the int8 sleep model matches Python 5/5 in 224 µs with a 956-byte arena (REQ-ML-04 Done). About 1 % of one core.
+- **Demo:** 2026-11-27. In hand: resistors, capacitors, electrodes. The rest (BioAmp EXG Pill, ADS1115, …) is due around 2026-11-26.
+- **Next work (recommended):** task 6b (end to end on the board on a replayed Sleep-EDF night), task 7a (ADS1115 driver written before the parts arrive), then task 7 (wiring, live signal). Task 5 (Oura app) only if the demo needs Oura data.
+- **Waiting on Farid:** PR #3 review; whether the demo shows Oura data; Docker Desktop install (task 5b, on C:); Oura developer app registration.
 
 ## 1. Who works where
 
@@ -41,7 +41,9 @@ before starting, and update it before you stop.
 | A | Calibration ablation (REQ-FEAT-10) | **Done 2026-11-21**: whole-night stats 0.740 macro F1; first 60 s–10 min 0.45–0.46; running stats (trained that way) 0.710 | `scripts/calibration_ablation.py`, `reports/calibration_ablation.md` |
 | A | Retrain with running standardisation (task 4a, REQ-FEAT-10) | **Done 2026-11-21** | `eegml/sleep_model.py` (`RunningStats`, `running_standardise`), `scripts/train_sleep_model.py` |
 | A | Int8 model on the XIAO (REQ-ML-04: arena used, µs per inference) | **Done 2026-11-21**: parity 5/5 with Python, 224 µs per inference, arena used 956 bytes, model 6,336 bytes; sketch 344 KB flash (10 %), 30.8 KB RAM (9 %) | `firmware/eeg_node/eeg_node.ino`, `reports/xiao_bench_2026-11-21.txt` |
-| B | Firmware: ADS1115 acquisition, filters, features, parity test | Not started; parts ordered, several received; demo 2026-11-27 | `firmware/eeg_node/` (to come) |
+| B | Firmware filters + window features, parity on the board (task 6, REQ-FEAT-09) | **Done 2026-11-21**: filtered samples within 6.5e-08 of full scale, all 20 features within tolerance (worst 0.4 %); 17 µs/sample filter, 5.2 ms/window features | `firmware/eeg_node/eeg_features.h`, `eeg_config.h` (generated), `reports/xiao_feature_parity_2026-11-21.txt` |
+| B | End to end on the board (task 6b) | **Next** | `firmware/eeg_node/` |
+| B | ADS1115 acquisition (task 7) | Driver can be written now (7a); wiring waits for the parts (due around 2026-11-26) | `firmware/eeg_node/` | `firmware/eeg_node/` (to come) |
 | C | Oura app (OAuth2, nightly pull, sandbox) | Not started; must run on the laptop | `hub/` (to come) |
 | C | Hub stack (Mosquitto, ingest, InfluxDB, Grafana) | Not started | `hub/` (to come) |
 | D | Overnight recording with Oura | Not started | — |
@@ -64,6 +66,7 @@ Code: confirm each line, fix anything wrong, fill the blanks, and note the date.
 | Board FQBN | `esp32:esp32:XIAO_ESP32S3` (`arduino-cli board list` shows the XIAO on COM5 as "ESP32 Family Device"; pass the FQBN explicitly) | 2026-11-21 |
 | XIAO serial port | COM5 with a data cable (COM4 is a Bluetooth port; charge-only cables were the cause of earlier upload failures) | 2026-11-21 (upload and serial confirmed) |
 | Reading the serial port from Claude Code | `arduino-cli monitor` prints nothing when its output is piped. Use pyserial instead: the **global** Python (`C:/Users/ffeis/AppData/Local/Programs/Python/Python312/python.exe`) has pyserial 3.5; the repo venv doesn't. Pulse RTS to reset the board so `setup()` lines are printed again. | 2026-11-21 |
+| Firmware numerics | float32 biquads put skew out of tolerance (2.3×); the filters run in double (17 µs per sample on the ESP32-S3, software double). Filter coefficients come from the generated `firmware/eeg_node/eeg_config.h` as full-precision doubles. | 2026-11-21 |
 | TFLite Micro (Chirale_TensorFlowLite 2.0.0) pitfalls | 1) Its FULLY_CONNECTED kernel supports only per-tensor int8 weights: a per-channel model (the TF 2.21 default) gives wrong outputs (parity 0/5 on the board). `eegml.sleep_model.to_int8` disables per-channel for dense layers, and a test guards it. 2) The input tensor's memory is reused by later layers: copy the input before **every** `Invoke()`. | 2026-11-21 |
 | Separate course setup (don't mix) | EECS 635 labs use PlatformIO (`C:\Users\ffeis\.platformio\penv\Scripts\pio.exe`, espressif32@6.8.0 → Arduino core 2.0.17) and a Lab 4 venv `l4-kws-local` (Python 3.12, TF 2.19.1) | EECS 635 labs |
 | Docker Desktop (for the hub) | **Not installed yet**; Farid decided to install it on this laptop (no `docker` command, no install folder, no winget entry as of 2026-11-16) | 2026-11-16 |
@@ -76,13 +79,13 @@ Code: confirm each line, fix anything wrong, fill the blanks, and note the date.
 ## 4. Open questions for Farid
 
 1. ~~Review PR #1's decisions (requirements §7)~~ Accepted by merging PR #1, 2026-11-16.
-2. ~~Have the front-end parts been ordered?~~ 2026-11-21: ordered, several received. **Demo moved to 2026-11-27.** 2026-11-21 (evening): resistors, capacitors and electrodes in hand; the rest ordered. When are the Pill and ADS1115 due?
+2. ~~Have the front-end parts been ordered?~~ 2026-11-21: ordered, several received. **Demo moved to 2026-11-27.** 2026-11-21 (evening): resistors, capacitors and electrodes in hand; the rest ordered. When are the Pill and ADS1115 due? → About 5 days, around 2026-11-26 (Farid, 2026-11-21).
 3. Oura developer app: registered yet? Needs an Oura account with an active membership for a Gen3+ ring.
 4. Repository rename: GitHub still shows `3ffeisullin/tinyml` with default branch `master`.
 5. ~~Docker Desktop is not installed on the laptop, and the hub (Phase C, REQ-HUB-01) needs it. Install it on the laptop, or run the hub on the Raspberry Pi?~~ Decided 2026-11-16: install Docker Desktop on the laptop.
 6. ~~**REQ-FEAT-10 (new 2026-11-21):** the sleep model loses most of its gain with stats from a short calibration (macro F1 0.74 → 0.45). Change REQ-FEAT-10 to a running per-session mean/SD (10-epoch warm-up; trained the same way: 0.710 vs the random forest's 0.680), keeping the 60 s calibration as a signal-quality check?~~ **Yes** (Farid, 2026-11-21); requirement updated.
 7. ~~**Task order (new 2026-11-21):** recommended 4a (retrain, ~1 h) → 4b (XIAO, no electrodes) → 5 (Oura app; needs the Oura developer app, Q3). 4b can also run first with the current header.~~ Farid: 4a, then 4b (2026-11-21).
-8. **Hub data on a G: drive (new 2026-11-21):** Farid asked whether the hub database can live on G:. The laptop shows no G: (only C:, 252 GB free; no mapped network drive, no Google Drive for desktop). What is G: (external USB disk, network share, cloud drive)? Advice given: a local NTFS external disk can hold Docker's whole disk image (Docker Desktop → Settings → Resources → Advanced → Disk image location), but must be connected whenever the hub runs; don't put a live database on a cloud-synced or network drive; a bind mount from a Windows path into the InfluxDB container works but is slow. Recommended: keep the database on C: and back it up to G:.
+8. **Hub data on a G: drive (new 2026-11-21):** Farid asked whether the hub database can live on G:. The laptop shows no G: (only C:, 252 GB free; no mapped network drive, no Google Drive for desktop). What is G:? → **Google Drive** (Farid, 2026-11-21): no live database there. Advice given: a local NTFS external disk can hold Docker's whole disk image (Docker Desktop → Settings → Resources → Advanced → Disk image location), but must be connected whenever the hub runs; don't put a live database on a cloud-synced or network drive; a bind mount from a Windows path into the InfluxDB container works but is slow. Recommended: keep the database on C: and back it up to G:. → Plan: Docker and InfluxDB on C:; optional nightly `influx backup` export into Google Drive later.
 
 ## 5. Next tasks (in order)
 
@@ -97,13 +100,16 @@ Code: confirm each line, fix anything wrong, fill the blanks, and note the date.
 | 4b | ~~Run the exported model on the XIAO with the `eeg_smoke` pattern (embedded test epochs, print arena used and µs per inference).~~ Done 2026-11-21: parity 5/5, 224 µs, arena 956 bytes. | Claude Code | REQ-ML-04, ML-06 |
 | 5 | **Oura app skeleton** in `hub/oura_app/`: plain Python first (no Docker needed): OAuth2 sign-in with a localhost callback page, encrypted token file, nightly pull + 3-day re-pull, UTC conversion, 401/429 handling, sandbox mode; tests with mocked API responses. Client ID/secret in a git-ignored `.env`. | Claude Code | REQ-OURA-01..07 |
 | 5b | Hub stack in Docker Compose (Mosquitto, ingest, InfluxDB, Grafana, Oura app) — **needs Docker Desktop installed** | Claude Code | REQ-HUB-01, OURA-08 |
-| 6 | **Next (demo path).** Firmware `eeg_node`: parity test on the board using `firmware/test_vectors/` before any hardware is wired | Claude Code | REQ-FEAT-09 |
-| 6b | End to end on the board: raw samples → filters → features → running standardisation (Welford, as `eegml.sleep_model.RunningStats`) → [t, t-1, t-2] buffer → int8 model → stage; check against Python on a recorded Sleep-EDF segment | Claude Code | REQ-FEAT-10, ML-04 |
-| 7 | ADS1115 acquisition once parts arrive | Claude Code | REQ-HW-*, REQ-ACQ-* |
+| 6 | ~~Firmware `eeg_node`: parity test on the board using `firmware/test_vectors/` before any hardware is wired~~ Done 2026-11-21 | Claude Code | REQ-FEAT-09 |
+| 6b | **Next.** End to end on the board: raw samples → filters → features → running standardisation (Welford, as `eegml.sleep_model.RunningStats`) → [t, t-1, t-2] buffer → int8 model → stage; check against Python on a recorded Sleep-EDF segment | Claude Code | REQ-FEAT-10, ML-04 |
+| 7a | ADS1115 driver and 250 Hz sampling loop, written and compiled before the parts arrive (fake-ADC mode for testing) | Claude Code | REQ-ACQ-* |
+| 7 | ADS1115 acquisition once parts arrive (around 2026-11-26): wiring, live band powers. Electrodes on a person only with the XIAO on battery, through the USB isolator, or with the laptop on battery (REQ-SAFE). | Claude Code | REQ-HW-*, REQ-ACQ-* |
 
 ## 6. Handoff log
 
 Newest first. One line per change: date, who, what, where.
+
+- 2026-11-21 · Claude Code (laptop) · Task 6 done on the XIAO (REQ-FEAT-09 Done): `firmware/eeg_node/eeg_features.h` (C++ port of the filters and window features) on the reference vectors → filtered samples within 6.5e-08 of full scale, all 20 features within tolerance (worst 0.4 %, skew), both from Python's and from the board's filtered samples; 17 µs per sample filter, 5.2 ms per window features; model bench still 5/5. float32 biquads had put skew at 2.3× tolerance, so the filters run in double. `scripts/export_test_vectors.py` now generates `firmware/eeg_node/eeg_config.h` from `eegml/config.py` (constants, double SOS) and a copy of the vectors header next to the sketch; it also had written invalid C literals (`1f`, `250f`), now fixed with a test. Vectors re-committed (only ~1e-11 float noise plus the literal fix). 2 new tests, 44 pass. Farid: G: is Google Drive (no live database there; DB on C:), parts due around 2026-11-26. Brief: `docs/briefs/2026-11-21-feature-parity.md`. PR #3, README, Notion and the home CLAUDE.md updated.
 
 - 2026-11-21 · Claude Code (laptop) · Parts: resistors, capacitors and electrodes in hand; the rest ordered (task 7 waits for the Pill and ADS1115). Farid asked about Docker disk space (~10–15 GB, C: has 252 GB free) and putting the hub database on G:; no G: is visible on the laptop, so §4 Q8 asks what it is. Notion mirror updated.
 

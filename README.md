@@ -12,11 +12,11 @@ Seeed XIAO ESP32-S3 with TensorFlow Lite Micro. (Qualcomm/Snapdragon work is a s
 | A · Sleep-EDF baseline | Done: device features macro F1 0.680 vs 0.621 for the MNE tutorial's (REQ-ML-02 pass) |
 | A · Int8 sleep model | Done in draft PR #3: running standardisation as on the device, int8 macro F1 0.707 vs 0.680 for the random forest, float/int8 agreement 98.7 % (REQ-ML-03), 6.3 KB model |
 | A · Model on the XIAO | Done: outputs match Python 5/5, 224 µs per inference, 956-byte arena (REQ-ML-04) |
-| B · Firmware (`eeg_node`) | Model bench runs on the board; next: feature parity (task 6), end to end (6b), acquisition (7). Parts ordered, several received; demo 2026-11-27 |
+| B · Firmware (`eeg_node`) | Filters and features match Python on the board (REQ-FEAT-09); next: end to end on the board (6b), ADS1115 (7). Parts due around 2026-11-26; demo 2026-11-27 |
 | C · Oura app and hub | Not started; Oura app after the int8 model, hub needs Docker |
 | D · Overnight recording | Not started |
 
-Latest work: [`docs/briefs/2026-11-21-int8-sleep-model.md`](docs/briefs/2026-11-21-int8-sleep-model.md).
+Latest work: [`docs/briefs/2026-11-21-feature-parity.md`](docs/briefs/2026-11-21-feature-parity.md) and [`docs/briefs/2026-11-21-int8-sleep-model.md`](docs/briefs/2026-11-21-int8-sleep-model.md).
 New to the project? Start with [`docs/getting-started.md`](docs/getting-started.md).
 Full state, the laptop environment, next tasks and the handoff log are in
 [`docs/STATUS.md`](docs/STATUS.md). Requirements are in
@@ -51,8 +51,8 @@ Project Status & Handoff", mirrors the status file.
 | `scripts/train_sleep_model.py` | Int8 sleep-stage model: same split as the baseline, float vs int8 report, exports `firmware/eeg_node/sleep_model.h` |
 | `scripts/calibration_ablation.py` | How the standardisation statistics (whole night, first minutes, running) change the model's results |
 | `reports/` | Baseline, sleep-model and calibration-ablation reports |
-| `firmware/eeg_node/` | `eeg_node.ino` (stage 1: sleep-model bench: parity, µs, arena) and generated `sleep_model.h` (int8 model, quantisation constants, test epochs) |
-| `scripts/export_test_vectors.py` | Writes reference vectors for checking the firmware against Python |
+| `firmware/eeg_node/` | `eeg_node.ino` (stage 2: feature parity + sleep-model bench), `eeg_features.h` (C++ filters and window features), generated `eeg_config.h` (constants from `eegml/config.py`), `sleep_model.h` (int8 model, test epochs) and `feature_vectors_v1.h` (copy of the vectors) |
+| `scripts/export_test_vectors.py` | Writes reference vectors for checking the firmware against Python, and `firmware/eeg_node/eeg_config.h` |
 | `tests/` | `pytest` suite (filters, features, epochs, vectors, Sleep-EDF path) |
 | `firmware/test_vectors/` | Generated C header of the reference vectors |
 | `scripts/smoke_test.py` | Synthetic alpha/beta EEG → 1D-CNN → INT8 TFLite → `firmware/eeg_smoke/model.h` |
