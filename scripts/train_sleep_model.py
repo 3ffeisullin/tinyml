@@ -174,6 +174,10 @@ def main():
            "seconds": round(time.time() - t0, 1)}
     a.out.mkdir(parents=True, exist_ok=True)
     (a.out / "sleep_model.json").write_text(json.dumps(res, indent=2))
+    # Out-of-fold stages per epoch (each night staged by a model that never saw that person), for
+    # per-night reports such as scripts/stage_minutes_report.py. Epochs are in recording order per subject.
+    np.savez_compressed(a.out / "sleep_model_cv_predictions.npz", y=y, subject=g, stages=np.array(STAGE_NAMES),
+                        **{k: v.astype(np.int8) for k, v in p.items()})
     md = report_md(res)
     (a.out / "sleep_model.md").write_text(md, encoding="utf-8")
     print(md)

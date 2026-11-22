@@ -53,6 +53,7 @@ Project Status & Handoff", mirrors the status file.
 | `scripts/sleep_edf_baseline.py` | Sleep-EDF Fpz-Cz baseline: device features vs MNE-tutorial features, leave-subjects-out |
 | `eegml/sleep_model.py` | Sleep-model input (per-session standardisation, clip, previous 2 epochs), int8 conversion, C-header export |
 | `scripts/train_sleep_model.py` | Int8 sleep-stage model: same split as the baseline, float vs int8 report, exports `firmware/eeg_node/sleep_model.h` |
+| `scripts/stage_minutes_report.py` | Minutes per sleep stage, total sleep time and deep-sleep share, per night: model vs experts (`reports/stage_minutes.md`) |
 | `scripts/demo_display.py` | Demo window: the board staging a replayed night next to the experts' hypnogram, or live band power and relative alpha (task 7d) |
 | `scripts/live_log.py` | Starts a live session on the XIAO (fake source or ADS1115), saves the output, summarises rate, errors and band powers |
 | `scripts/replay_night.py` | Streams a Sleep-EDF night to the XIAO over USB and compares the board's features, model outputs and stages with Python |

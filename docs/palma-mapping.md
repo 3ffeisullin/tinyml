@@ -84,5 +84,7 @@ On the held-out night (subject 20), the board's stages give **45.0 min of N3 aga
 44.5 vs 88.5 min (`reports/replay_sc20.csv`). Across all 20 cross-validated people, the totals are close (3,146 epochs
 predicted N3 vs 2,981 true), so the error is per night rather than a systematic bias. Most of it is N2 epochs called
 N3. Slow-wave and spindle features (the Palma-derived peak idea) and HMM state features are the two cheapest
-experiments aimed at exactly that confusion. The next step adds a per-night "minutes per stage" error report so each
-experiment is judged on it.
+experiments aimed at exactly that confusion. The per-night "minutes per stage" report (`reports/stage_minutes.md`, added 2026-11-22) is the yardstick:
+across the 20 cross-validated nights, deep-sleep minutes are off by 25.2 min per night on average (bias only
++4.1 min), and the model pulls each night's deep sleep toward the average. Each Palma-derived experiment is
+judged on that error as well as on macro F1.
