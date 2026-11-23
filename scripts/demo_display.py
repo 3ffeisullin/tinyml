@@ -489,6 +489,18 @@ def mdates_num(t):
     return mdates.date2num(t)
 
 
+REPO = Path(__file__).resolve().parents[1]
+
+
+def live_save_allowed(path) -> bool:
+    """Privacy guard for the ring's real data: inside the repo, a PNG may only go under data/ (git-ignored).
+    Paths outside the repo (e.g. Desktop) are the user's own choice."""
+    p = Path(path).resolve()
+    if not p.is_relative_to(REPO):
+        return True
+    return p.is_relative_to(REPO / "data")
+
+
 DEMO_DIR = Path(__file__).resolve().parents[1] / "tests" / "fixtures" / "oura_demo"
 DEMO_SOURCE = "Sample nights: Sleep-EDF expert sleep stages, simulated heart rate, HRV and scores"
 OURA_ROWS = {"awake": 3, "REM": 2, "light": 1, "deep": 0}
@@ -656,6 +668,10 @@ def main():
     if a.mode == "oura":
         from hub.oura_app.config import DATA_DIR
         from hub.oura_app.data import LocalStore, day_view
+        if a.save and not (a.demo or a.sandbox) and not live_save_allowed(a.save):
+            sys.exit(f"Refusing to save the ring's data to {a.save}: inside the repo, a screenshot of real Oura data "
+                     "may only go under data/ (git-ignored). Use e.g. --save data/oura/screen.png, or --demo / "
+                     "--sandbox for an image to commit.")
         root = DEMO_DIR if a.demo else DATA_DIR / ("sandbox" if a.sandbox else "live")
         v = day_view(LocalStore(root), a.day)
         if not v["day"]:

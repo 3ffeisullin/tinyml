@@ -91,6 +91,19 @@ class LocalStore:
         self._save(name, d)
         return c
 
+    def replace_window(self, name: str, records: dict, in_window) -> dict:
+        """Make the re-pulled window match Oura's answer: upsert `records` and drop stored records for which
+        `in_window(key, record)` is true but Oura no longer returned them (deleted or re-issued sleep periods).
+        Returns counts of new / updated / unchanged / removed."""
+        d = self._load(name)
+        gone = [k for k, v in d.items() if k not in records and in_window(k, v)]
+        for k in gone:
+            del d[k]
+        self._save(name, d)
+        c = self.upsert(name, records)
+        c["removed"] = len(gone)
+        return c
+
     def sleep(self) -> list[dict]:
         return sorted(self._load("sleep").values(), key=lambda r: r["bedtime_start"])
 

@@ -1,7 +1,9 @@
 """Pull recent Oura data into the local store (REQ-OURA-04/05).
 
-Each run covers the last `days` days (at least REPULL_DAYS = 3, to catch late ring syncs) and
-upserts, so running it nightly, or twice, never duplicates a record. Every collection in
+Each run covers the last `days` days (at least REPULL_DAYS = 3, to catch late ring syncs). Oura's answer
+replaces what is stored for that window: records are upserted, so running it nightly, or twice, never
+duplicates one, and stored records in the window that Oura no longer returns (a deleted or re-issued
+sleep period) are removed. Every collection in
 config.COLLECTIONS whose scope was granted is pulled; one the sign-in doesn't cover is reported
 as "no access" and the rest still go through.
 """
@@ -45,6 +47,15 @@ def _fetch(client, name: str, start: date, end: date) -> dict:
     return {_key(r): r for r in rows}
 
 
+def _in_window(name: str, start: date, end: date):
+    """Which stored records the re-pull of [start, end] is the full answer for."""
+    if COLLECTIONS[name][1] == "datetime":                  # heart rate: keyed by UTC timestamp
+        a, b = iso_utc(datetime.combine(start, time(), timezone.utc)), iso_utc(datetime.combine(end, time(), timezone.utc))
+        return lambda key, rec: a <= key < b
+    lo, hi = start.isoformat(), end.isoformat()             # Oura's start_date/end_date: days, inclusive
+    return lambda key, rec: bool(rec.get("day")) and lo <= rec["day"] <= hi
+
+
 def pull(client, store, today: date | None = None, days: int = REPULL_DAYS, heartrate: bool = True,
          names: list[str] | None = None) -> dict:
     """Returns {"window": [start, end], <collection>: {new, updated, unchanged} or {"error": msg}}."""
@@ -53,7 +64,8 @@ def pull(client, store, today: date | None = None, days: int = REPULL_DAYS, hear
     out = {"window": [start.isoformat(), end.isoformat()]}
     for name in names or wanted(client.s.scopes, heartrate):
         try:
-            out[name] = store.upsert(name, _fetch(client, name, start, end))
+            recs = _fetch(client, name, start, end)            # raises before anything is replaced
+            out[name] = store.replace_window(name, recs, _in_window(name, start, end))
         except NoAccess:
             out[name] = {"error": "no access (scope not granted)"}
         except OuraError as e:

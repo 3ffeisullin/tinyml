@@ -7,6 +7,7 @@ Refresh tokens are single-use: every refresh returns a new one, saved at once.
 """
 import base64
 import hashlib
+import html
 import secrets
 import threading
 import time
@@ -19,7 +20,9 @@ from .tokens import Token
 
 
 class AuthError(RuntimeError):
-    pass
+    def __init__(self, msg: str, code: str = ""):
+        super().__init__(msg)
+        self.code = code              # Oura's OAuth error code, e.g. invalid_grant
 
 
 def pkce_pair() -> tuple[str, str]:
@@ -55,7 +58,7 @@ def _token_request(http, s: Settings, form: dict, now: float) -> Token:
             err = r.json().get("error", "")
         except ValueError:
             err = ""
-        raise AuthError(f"token request failed: HTTP {r.status_code} {err}".strip())
+        raise AuthError(f"token request failed: HTTP {r.status_code} {err}".strip(), code=err or "")
     return Token.from_response(r.json(), now)
 
 
@@ -63,6 +66,25 @@ def exchange_code(http, s: Settings, code: str, verifier: str, now: float | None
     return _token_request(http, s, {"grant_type": "authorization_code", "code": code,
                                     "redirect_uri": s.redirect_uri, "code_verifier": verifier},
                           time.time() if now is None else now)
+
+
+def revoke(http, token: Token) -> str:
+    """Revoke the access token at Oura. Returns a plain outcome; the token never appears in the text.
+
+    Oura's docs give only the URL form (`/oauth/revoke?access_token=...`, no method), so GET is used,
+    with POST as a fallback if Oura answers 405."""
+    from .config import REVOKE_URL, USER_AGENT
+    try:
+        r = http.get(REVOKE_URL, params={"access_token": token.access_token}, headers={"User-Agent": USER_AGENT},
+                     timeout=30)
+        if r.status_code == 405:
+            r = http.post(REVOKE_URL, params={"access_token": token.access_token},
+                          headers={"User-Agent": USER_AGENT}, timeout=30)
+    except Exception as e:                       # network errors can quote the URL, which holds the token
+        return f"could not reach Oura ({type(e).__name__}); the sign-in may still be active at Oura"
+    if r.status_code == 200:
+        return "revoked at Oura"
+    return f"Oura answered HTTP {r.status_code}; the sign-in may still be active at Oura"
 
 
 def refresh(http, s: Settings, token: Token, store, now: float | None = None) -> Token:
@@ -92,7 +114,7 @@ def wait_for_callback(s: Settings, state: str, timeout: float = 300) -> str:
             except AuthError as e:
                 result["error"] = str(e)
                 title, text = "Sign-in failed", str(e)
-            body = PAGE.format(title=title, text=text).encode()
+            body = PAGE.format(title=html.escape(title), text=html.escape(text)).encode()
             self.send_response(200); self.send_header("Content-Type", "text/html; charset=utf-8")
             self.send_header("Content-Length", str(len(body))); self.end_headers(); self.wfile.write(body)
 

@@ -16,7 +16,7 @@ from datetime import datetime, timezone
 
 from . import auth
 from .client import OuraClient
-from .config import DATA_DIR, REPULL_DAYS, REVOKE_URL, TOKEN_URL, USER_AGENT, ConfigError, load_settings
+from .config import DATA_DIR, REPULL_DAYS, TOKEN_URL, USER_AGENT, ConfigError, load_settings
 from .data import LocalStore, day_view, night_summary
 from .report import print_day
 from .pull import pull
@@ -97,14 +97,13 @@ def main(argv=None):
                 if k == "window":
                     continue
                 print(f"  {k:25s} " + (c["error"] if "error" in c else
-                                         f"{c['new']} new, {c['updated']} updated, {c['unchanged']} unchanged"))
+                                         f"{c['new']} new, {c['updated']} updated, {c['unchanged']} unchanged"
+                                         + (f", {c['removed']} removed" if c.get("removed") else "")))
         elif a.cmd == "logout":
             tok = store.load()
-            if tok:
-                http.post(REVOKE_URL, params={"access_token": tok.access_token},
-                          headers={"User-Agent": USER_AGENT}, timeout=30)
+            outcome = auth.revoke(http, tok) if tok else "no tokens were stored"
             store.delete()
-            print("Signed out; tokens revoked and deleted.")
+            print(f"Signed out: {outcome}; tokens deleted from Windows Credential Manager.")
         return 0
     except (ConfigError, auth.AuthError, RuntimeError) as e:
         print(f"Error: {e}", file=sys.stderr)
