@@ -69,6 +69,35 @@ def read_until(port, prefix: str, timeout: float, sink: list):
     raise TimeoutError(f"no '{prefix}' from the board within {timeout:.0f} s")
 
 
+def open_board(p, line_freq: float, log: list):
+    """Reset the board (fresh self-tests), wait for READY, start a replay session."""
+    p.dtr = False; p.rts = True; time.sleep(0.1); p.rts = False
+    p.close(); time.sleep(1.5); p.open()
+    read_until(p, "READY", 30, log)
+    p.write(f"BEGIN {line_freq:g}\n".encode())
+    read_until(p, "OK BEGIN", 5, log)
+
+
+def send_epoch(p, samples32: np.ndarray):
+    """Send one 30 s epoch of float32 samples; return the board's lines and its time in us."""
+    data = samples32.astype("<f4").tobytes()
+    p.write(b"EPOCH\n")
+    for i in range(0, len(data), CHUNK):  # flow control: the board answers "C" per chunk
+        p.write(data[i:i + CHUNK])
+        read_until(p, "C", 10, [])
+    lines = []
+    ack = read_until(p, "ACK", 30, lines)
+    return lines, float(ack.split()[2])
+
+
+def end_session(p):
+    """Flush a session shorter than the warm-up; return the final lines."""
+    p.write(b"END\n")
+    lines = []
+    read_until(p, "DONE", 10, lines)
+    return lines
+
+
 def run_board(port_name: str, seg32: np.ndarray, n_epochs: int, log: list):
     feats = np.full((n_epochs, len(EPOCH_FEATURE_NAMES)), np.nan)
     windows = np.zeros(n_epochs, int)
@@ -76,29 +105,16 @@ def run_board(port_name: str, seg32: np.ndarray, n_epochs: int, log: list):
     stage_names = {}
     us = np.zeros(n_epochs)
     with serial.Serial(port_name, 115200, timeout=1) as p:
-        p.dtr = False; p.rts = True; time.sleep(0.1); p.rts = False  # reset: fresh self-tests
-        p.close(); time.sleep(1.5); p.open()
-        read_until(p, "READY", 30, log)
-        p.write(f"BEGIN {LINE_FREQ:g}\n".encode())
-        read_until(p, "OK BEGIN", 5, log)
+        open_board(p, LINE_FREQ, log)
         t0 = time.time()
         for e in range(n_epochs):
-            data = seg32[e * EPOCH_N:(e + 1) * EPOCH_N].astype("<f4").tobytes()
-            p.write(b"EPOCH\n")
-            for i in range(0, len(data), CHUNK):  # flow control: the board answers "C" per chunk
-                p.write(data[i:i + CHUNK])
-                read_until(p, "C", 10, [])
-            lines = []
-            ack = read_until(p, "ACK", 30, lines)
+            lines, us[e] = send_epoch(p, seg32[e * EPOCH_N:(e + 1) * EPOCH_N])
             log.extend(lines)
-            us[e] = float(ack.split()[2])
             for line in lines:
                 parse_line(line, feats, windows, out, stage_names)
             if e % 100 == 0 or e == n_epochs - 1:
                 print(f"  epoch {e + 1}/{n_epochs}  {time.time() - t0:.0f} s", flush=True)
-        p.write(b"END\n")
-        lines = []
-        read_until(p, "DONE", 10, lines)
+        lines = end_session(p)
         log.extend(lines)
         for line in lines:
             parse_line(line, feats, windows, out, stage_names)
@@ -111,6 +127,21 @@ def parse_line(line, feats, windows, out, stage_names):
         e = int(parts[1]); windows[e] = int(parts[2]); feats[e] = [float(v) for v in parts[3:]]
     elif parts[0] == "OUT":
         t = int(parts[1]); stage_names[t] = parts[2]; out[t] = [int(v) for v in parts[3:8]]
+
+
+def prepare_night(subject: int, max_epochs: int = 0):
+    """The night as the device sees it: float32 at 250 Hz, every 30 s slot an epoch.
+
+    Slots the hypnogram doesn't stage (movement time, '?') get label -1: processed, not scored."""
+    x, fs, anns = load_subject(subject)
+    seg, offsets, y_scored, _ = device_segment(x, fs, anns)
+    if np.any(offsets % EPOCH_N):
+        sys.exit("Error: scored epochs are not on 30 s boundaries of the segment.")
+    n_slots = len(seg) // EPOCH_N
+    labels = np.full(n_slots, -1)
+    labels[offsets // EPOCH_N] = y_scored
+    n = n_slots if max_epochs <= 0 else min(max_epochs, n_slots)
+    return seg[:n * EPOCH_N].astype(np.float32), labels[:n]
 
 
 def scores(y, pred):
@@ -131,17 +162,8 @@ def main():
     ap.add_argument("--out", type=Path, default=ROOT / "reports")
     a = ap.parse_args()
 
-    x, fs, anns = load_subject(a.subject)
-    seg, offsets, y_scored, _ = device_segment(x, fs, anns)
-    if np.any(offsets % EPOCH_N):
-        sys.exit("Error: scored epochs are not on 30 s boundaries of the segment.")
-    # The device sees a continuous signal: every 30 s slot is an epoch. Slots the hypnogram
-    # doesn't stage (movement time, '?') are processed but not scored (label -1).
-    n_slots = len(seg) // EPOCH_N
-    labels = np.full(n_slots, -1)
-    labels[offsets // EPOCH_N] = y_scored
-    n = n_slots if a.max_epochs <= 0 else min(a.max_epochs, n_slots)
-    seg32, labels = seg[:n * EPOCH_N].astype(np.float32), labels[:n]
+    seg32, labels = prepare_night(a.subject, a.max_epochs)
+    n = len(labels)
     print(f"Subject {a.subject}: {n} epochs ({n * EPOCH_S / 3600:.1f} h), {int((labels < 0).sum())} unscored, "
           f"{n * EPOCH_N * 4 / 1e6:.1f} MB to send", flush=True)
 
