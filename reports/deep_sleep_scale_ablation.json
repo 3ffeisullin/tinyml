@@ -1,0 +1,164 @@
+{
+  "running": {
+    "macro_f1": 0.7174366837354403,
+    "summary": {
+      "N3": {
+        "experts_mean": 74.525,
+        "model_mean": 78.975,
+        "bias": 4.45,
+        "mae": 24.65,
+        "worst_night": "SC08",
+        "worst_error": -61.0,
+        "r": 0.6512626988111848
+      },
+      "N3_pct": {
+        "experts_mean": 18.482478689045195,
+        "model_mean": 19.613212503876607,
+        "bias": 1.1307338148314126,
+        "mae": 6.2643069239966875,
+        "worst_night": "SC08",
+        "worst_error": -17.158877295791758,
+        "r": 0.7070419521128388
+      },
+      "N2": {
+        "experts_mean": 230.0,
+        "model_mean": 208.95,
+        "bias": -21.05,
+        "mae": 43.65,
+        "worst_night": "SC11",
+        "worst_error": -142.5,
+        "r": 0.6956934079043555
+      },
+      "REM": {
+        "experts_mean": 93.9,
+        "model_mean": 98.45,
+        "bias": 4.55,
+        "mae": 18.15,
+        "worst_night": "SC11",
+        "worst_error": -64.5,
+        "r": 0.8008039957268479
+      },
+      "TST": {
+        "experts_mean": 429.425,
+        "model_mean": 423.75,
+        "bias": -5.675,
+        "mae": 22.575,
+        "worst_night": "SC11",
+        "worst_error": -175.0,
+        "r": 0.8843104158775338
+      }
+    },
+    "model_n3_pct_range": [
+      8.695652173913043,
+      35.4625550660793
+    ]
+  },
+  "fixed": {
+    "macro_f1": 0.7196829689592736,
+    "summary": {
+      "N3": {
+        "experts_mean": 74.525,
+        "model_mean": 82.775,
+        "bias": 8.25,
+        "mae": 20.45,
+        "worst_night": "SC17",
+        "worst_error": 73.5,
+        "r": 0.824565550953785
+      },
+      "N3_pct": {
+        "experts_mean": 18.482478689045195,
+        "model_mean": 20.35803102474689,
+        "bias": 1.875552335701694,
+        "mae": 4.12057400169188,
+        "worst_night": "SC17",
+        "worst_error": 11.916436972401158,
+        "r": 0.8979062959935222
+      },
+      "N2": {
+        "experts_mean": 230.0,
+        "model_mean": 207.85,
+        "bias": -22.15,
+        "mae": 32.25,
+        "worst_night": "SC11",
+        "worst_error": -143.0,
+        "r": 0.8599111313713349
+      },
+      "REM": {
+        "experts_mean": 93.9,
+        "model_mean": 94.65,
+        "bias": 0.75,
+        "mae": 28.0,
+        "worst_night": "SC16",
+        "worst_error": -86.5,
+        "r": 0.5385827491924393
+      },
+      "TST": {
+        "experts_mean": 429.425,
+        "model_mean": 427.0,
+        "bias": -2.425,
+        "mae": 28.075,
+        "worst_night": "SC11",
+        "worst_error": -155.0,
+        "r": 0.8770167669940041
+      }
+    },
+    "model_n3_pct_range": [
+      4.8979591836734695,
+      48.1767955801105
+    ]
+  },
+  "running + fixed": {
+    "macro_f1": 0.7246547206996247,
+    "summary": {
+      "N3": {
+        "experts_mean": 74.525,
+        "model_mean": 84.175,
+        "bias": 9.65,
+        "mae": 24.2,
+        "worst_night": "SC17",
+        "worst_error": 112.5,
+        "r": 0.6934010472695458
+      },
+      "N3_pct": {
+        "experts_mean": 18.482478689045195,
+        "model_mean": 21.6544992831558,
+        "bias": 3.1720205941106077,
+        "mae": 5.600165224398614,
+        "worst_night": "SC17",
+        "worst_error": 20.581113801452787,
+        "r": 0.7866636061861457
+      },
+      "N2": {
+        "experts_mean": 230.0,
+        "model_mean": 198.9,
+        "bias": -31.1,
+        "mae": 37.55,
+        "worst_night": "SC11",
+        "worst_error": -212.0,
+        "r": 0.7851592111684197
+      },
+      "REM": {
+        "experts_mean": 93.9,
+        "model_mean": 93.625,
+        "bias": -0.275,
+        "mae": 15.725,
+        "worst_night": "SC11",
+        "worst_error": -66.0,
+        "r": 0.7582571024640521
+      },
+      "TST": {
+        "experts_mean": 429.425,
+        "model_mean": 419.225,
+        "bias": -10.2,
+        "mae": 31.35,
+        "worst_night": "SC11",
+        "worst_error": -315.0,
+        "r": 0.7606407747735996
+      }
+    },
+    "model_n3_pct_range": [
+      2.9866117404737382,
+      46.610169491525426
+    ]
+  }
+}

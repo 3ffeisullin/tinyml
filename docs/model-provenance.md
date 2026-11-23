@@ -78,6 +78,15 @@ channel). That's one reason REM and quiet wake are hard for it to tell apart.
 - **Accuracy on more than one held-out night.** The board was checked on one unseen night; the cross-validated
   estimate covers 20 people.
 
+## 6. Relation to Palma et al. (2024)
+
+The project's foundational reference is Palma, Thornberry, Commins & Moral, *Understanding learning from EEG
+data*, Neuroinformatics 2024 (code: `3ffeisullin/EEG-Time-Series-Models`). **The model on the board uses no code,
+data or trained model from that work.** Their study classifies maze learners from awake EEG, one sample per
+person, with no sleep labels, so its data and models can't train a sleep stager. Its feature-engineering ideas
+(HMM state features, envelope peak features, mixed models) are being evaluated as additions; see
+`docs/palma-mapping.md` for what is used, what isn't, and why.
+
 ## Sources
 
 - Dataset page and licence: <https://physionet.org/content/sleep-edfx/1.0.0/>
