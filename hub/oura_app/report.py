@@ -11,6 +11,12 @@ def _min(sec):
     return None if sec is None else round(sec / 60, 1)
 
 
+def hm(minutes) -> str:
+    """Minutes as '7 h 05 min' (or '44 min' under an hour)."""
+    m = int(round(minutes))
+    return f"{m} min" if m < 60 else f"{m // 60} h {m % 60:02d} min"
+
+
 def day_lines(v) -> list[tuple[str, str]]:
     """(label, value) rows for everything in a day_view; missing values are skipped."""
     s, n, rows = v["summary"] or {}, v["night"] or {}, []
@@ -21,12 +27,12 @@ def day_lines(v) -> list[tuple[str, str]]:
 
     if s:
         add("Bed → up (local)", f"{s['start_local']} → {s['end_local']}")
-        add("In bed", s["in_bed_min"], " min")
-        add("Asleep", s["sleep_min"], " min")
-        add("Deep", f"{s['deep_min']} min ({s['deep_pct']} % of sleep)")
-        add("Light", s["light_min"], " min")
-        add("REM", s["rem_min"], " min")
-        add("Awake", s["awake_min"], " min")
+        add("In bed", hm(s["in_bed_min"]))
+        add("Asleep", hm(s["sleep_min"]))
+        add("Deep", f"{hm(s['deep_min'])} ({s['deep_pct']:.0f} % of sleep)")
+        add("Light", hm(s["light_min"]))
+        add("REM", hm(s["rem_min"]))
+        add("Awake", hm(s["awake_min"]))
     add("Sleep efficiency", n.get("efficiency"), " %")
     add("Time to fall asleep", _min(n.get("latency")), " min")
     add("Average heart rate", n.get("average_heart_rate") and round(n["average_heart_rate"]), " bpm")

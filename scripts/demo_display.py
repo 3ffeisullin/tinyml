@@ -18,7 +18,9 @@ Three views:
           hypnogram, heart rate and HRV through the night, deep sleep per night, and every
           score and value the app has pulled (sleep, readiness, activity, stress, heart
           health). Reads data/oura/live (run `python -m hub.oura_app pull` first);
-          --sandbox shows Oura's sample data instead.
+          --sandbox shows Oura's sample data instead; --demo shows 14 realistic sample nights
+          (Sleep-EDF expert stages, simulated heart rate and HRV; scripts/make_oura_demo.py),
+          safe to share and the fallback if the ring has few nights.
 
     .\\venv\\Scripts\\python.exe scripts\\demo_display.py replay --port COM5
     .\\venv\\Scripts\\python.exe scripts\\demo_display.py replay --port none
@@ -436,8 +438,26 @@ def mdates_num(t):
     return mdates.date2num(t)
 
 
+DEMO_DIR = Path(__file__).resolve().parents[1] / "tests" / "fixtures" / "oura_demo"
+DEMO_SOURCE = "Sample nights: Sleep-EDF expert sleep stages, simulated heart rate, HRV and scores"
 OURA_ROWS = {"awake": 3, "REM": 2, "light": 1, "deep": 0}
 OURA_TICKS = ([3, 2, 1, 0], ["Awake", "REM", "Light", "Deep"])
+
+
+def _break_gaps(ts, ys):
+    """Insert a NaN wherever consecutive samples are more than 1.5 steps apart, so a line stops at a gap."""
+    if len(ts) < 3:
+        return list(ts), list(ys)
+    steps = np.diff([mdates_num(t) for t in ts])
+    lim = 1.5 * float(np.median(steps))
+    out_t, out_y = [ts[0]], [ys[0]]
+    for k in range(1, len(ts)):
+        if steps[k - 1] > lim:
+            out_t.append(ts[k - 1] + (ts[k] - ts[k - 1]) / 2)
+            out_y.append(np.nan)
+        out_t.append(ts[k])
+        out_y.append(ys[k])
+    return out_t, out_y
 
 
 class OuraView:
@@ -468,10 +488,21 @@ class OuraView:
         if hyp:
             ts = [h[0] for h in hyp] + [hyp[-1][0] + (hyp[1][0] - hyp[0][0] if len(hyp) > 1 else timedelta(0))]
             ys = [OURA_ROWS.get(s, 3) for _, s in hyp]
-            ax.step(ts, ys + ys[-1:], where="post", color=BOARD, lw=1.6)
-            for (t0, s), t1 in zip(hyp, ts[1:]):
+            ax.step(ts, ys + ys[-1:], where="post", color=GRID, lw=1.0, zorder=1)
+            # one block per run of the same stage: sleep in the accent, awake in grey, so stretches read at a glance
+            runs, i = [], 0
+            while i < len(hyp):
+                j = i
+                while j + 1 < len(hyp) and hyp[j + 1][1] == hyp[i][1]:
+                    j += 1
+                runs.append((ts[i], ts[j + 1], hyp[i][1]))
+                i = j + 1
+            for t0, t1, s in runs:
+                row = OURA_ROWS.get(s, 3)
+                ax.fill_between([t0, t1], row - 0.32, row + 0.32, color=EXPERTS if s == "awake" else BOARD,
+                                lw=0, zorder=2)
                 if s == "deep":
-                    ax.axvspan(t0, t1, ymin=0, ymax=0.25, color=BOARD, alpha=0.18, lw=0)
+                    ax.axvspan(t0, t1, color=BOARD, alpha=0.10, lw=0, zorder=0)
         ax.xaxis.set_major_formatter(fmt)
         self._series(fig.add_subplot(gs[1, 0], sharex=ax), v["hr"], "Heart rate through the night", "bpm", fmt)
         self._series(fig.add_subplot(gs[2, 0], sharex=ax), v["hrv"], "HRV through the night (RMSSD)", "ms", fmt)
@@ -489,6 +520,9 @@ class OuraView:
                 axd.text(xi, val, f"{val:.0f}", ha="center", va="bottom", color=INK2, fontsize=8)
             axd.set_ylim(0, max(vals) * 1.3 + 1)
             axd.set_xlim(-0.6, max(len(tr), 14) - 0.4)          # keep bars thin when there are few nights
+            if len(tr) < 3:
+                axd.text(0.99, 0.95, f"{len(tr)} night{'s' if len(tr) > 1 else ''} so far; fills in as the ring "
+                         "syncs", color=MUTED, fontsize=9, ha="right", va="top", transform=axd.transAxes)
 
         rows = day_lines(v)
         cut = next((i for i, (lab, _) in enumerate(rows) if lab == "Readiness score"), len(rows))
@@ -512,11 +546,11 @@ class OuraView:
         ax.set_title(title, loc="left", color=INK, fontsize=11)
         if pts:
             ts, ys = zip(*pts)
-            ax.plot(ts, ys, color=BOARD, lw=2)
+            ax.plot(*_break_gaps(ts, ys), color=BOARD, lw=2)        # no line across missing 5-min values
             i = int(np.argmin(ys)) if unit == "bpm" else int(np.argmax(ys))
             ax.plot([ts[i]], [ys[i]], "o", ms=7, color=BOARD, mec=SURFACE, mew=2)
-            ax.set_title(f"{title}  ·  {'lowest' if unit == 'bpm' else 'highest'} {ys[i]:.0f} {unit} at "
-                         f"{fmt(mdates_num(ts[i]))}, mean {np.mean(ys):.0f}", loc="left", color=INK, fontsize=11)
+            ax.set_title(f"{title}  ·  5-min values: {'lowest' if unit == 'bpm' else 'highest'} {ys[i]:.0f} {unit} "
+                         f"at {fmt(mdates_num(ts[i]))}, mean {np.mean(ys):.0f}", loc="left", color=INK, fontsize=11)
             pad = (max(ys) - min(ys)) * 0.25 + 1
             ax.set_ylim(min(ys) - pad, max(ys) + pad)
         else:
@@ -546,7 +580,10 @@ def main():
     l_.add_argument("--seconds", type=float, default=0, help="stop after this long (0 = until the window closes)")
     o = sub.add_parser("oura", help="everything the Oura ring recorded for one night and day")
     o.add_argument("--day", help="YYYY-MM-DD (default: latest stored night)")
-    o.add_argument("--sandbox", action="store_true", help="Oura's sample data instead of the ring's")
+    src = o.add_mutually_exclusive_group()
+    src.add_argument("--sandbox", action="store_true", help="Oura's sample data instead of the ring's")
+    src.add_argument("--demo", action="store_true",
+                     help="14 sample nights: Sleep-EDF expert stages, simulated heart rate and HRV (no personal data)")
     for p in (r, l_, o):
         p.add_argument("--save", type=Path, help="write a PNG at the end")
         p.add_argument("--headless", action="store_true", help="no window (needs --save)")
@@ -568,10 +605,13 @@ def main():
     if a.mode == "oura":
         from hub.oura_app.config import DATA_DIR
         from hub.oura_app.data import LocalStore, day_view
-        v = day_view(LocalStore(DATA_DIR / ("sandbox" if a.sandbox else "live")), a.day)
+        root = DEMO_DIR if a.demo else DATA_DIR / ("sandbox" if a.sandbox else "live")
+        v = day_view(LocalStore(root), a.day)
         if not v["day"]:
-            sys.exit("No Oura nights stored: run `python -m hub.oura_app pull` first.")
-        OuraView(fig, v, "Oura sandbox (sample data)" if a.sandbox else "Farid's ring, via the Oura API v2")
+            sys.exit("No Oura nights stored: run `python -m hub.oura_app pull` first"
+                     + (" (or scripts/make_oura_demo.py for --demo)." if a.demo else "."))
+        OuraView(fig, v, DEMO_SOURCE if a.demo else
+                 "Oura sandbox (sample data)" if a.sandbox else "Farid's ring, via the Oura API v2")
         if a.save:
             a.save.parent.mkdir(parents=True, exist_ok=True)
             fig.savefig(a.save, dpi=110, facecolor=SURFACE)
