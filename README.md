@@ -82,6 +82,7 @@ Project Status & Handoff", mirrors the status file.
 .\venv\Scripts\python.exe scripts\demo_display.py replay --port COM5       # demo: board stages a held-out night (--port none: no board)
 .\venv\Scripts\python.exe scripts\demo_display.py live --source fake       # demo: live band power (--source adc once wired)
 .\venv\Scripts\python.exe scripts\demo_display.py oura                     # demo: everything from the Oura ring (after `python -m hub.oura_app pull`)
+.\venv\Scripts\python.exe scripts\demo_display.py oura --demo              # same screen on 14 sample nights (Sleep-EDF stages, simulated heart rate; no personal data)
 .\venv\Scripts\python.exe scripts\smoke_test.py
 
 # Board side (or open firmware/eeg_smoke in Arduino IDE, board "XIAO_ESP32S3")
