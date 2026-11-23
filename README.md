@@ -6,17 +6,17 @@ Seeed XIAO ESP32-S3 with TensorFlow Lite Micro. (Qualcomm/Snapdragon work is a s
 > Hobby/research project: it makes no medical or diagnostic claims (REQ-SAFE-04). Where the sleep model and its
 > training data come from, in plain language: [`docs/model-provenance.md`](docs/model-provenance.md).
 
-## Project status (2026-11-22)
+## Project status (2026-11-23)
 
 | Phase | State |
 |---|---|
 | Toolchain smoke test on the XIAO | Done (2026-11-05) |
 | A · Requirements, Python reference features, test vectors | Done (merged 2026-11-16) |
 | A · Sleep-EDF baseline | Done: device features macro F1 0.680 vs 0.621 for the MNE tutorial's (REQ-ML-02 pass) |
-| A · Int8 sleep model | Done in draft PR #3: running standardisation as on the device, int8 macro F1 0.707 vs 0.680 for the random forest, float/int8 agreement 98.7 % (REQ-ML-03), 6.3 KB model |
+| A · Int8 sleep model | Done (merged 2026-11-23): running standardisation as on the device, int8 macro F1 0.707 vs 0.680 for the random forest, float/int8 agreement 98.7 % (REQ-ML-03), 6.3 KB model |
 | A · Model on the XIAO | Done: outputs match Python 5/5, 224 µs per inference, 956-byte arena (REQ-ML-04) |
 | B · Firmware (`eeg_node`) | The whole chain runs on the board: on a replayed held-out night its stages match Python on 100 % of epochs (REQ-FEAT-06/09/10). Acquisition firmware ready and verified with a fake 250 Hz source (task 7a); wiring and bring-up next (`docs/bringup.md`); parts due around 2026-11-26; demo 2026-11-27 |
-| B · Demo display | Done (task 7d, branch `feature/demo-display`): replayed night and live views, `scripts/demo_display.py` |
+| B · Demo display | Done (task 7d, merged 2026-11-23): replayed night and live views, `scripts/demo_display.py` |
 | C · Oura app and hub | Oura app works on the laptop (sign-in, pull of all granted data, sandbox; `hub/oura_app/`); Oura screen `scripts/demo_display.py oura` (2026-11-22); hub needs Docker (after the demo) |
 | D · Overnight recording | Not started |
 

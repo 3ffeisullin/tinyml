@@ -1,14 +1,14 @@
 # Project status and handoff log
 
-Last updated: 2026-11-21 (evening) by Claude Code (laptop)
+Last updated: 2026-11-23 by Claude Code (laptop)
 
 This file is the shared state between the two places work happens. Read it
 before starting, and update it before you stop.
 
 ## 0. Resume here
 
-- **master** is at `309a1bf` (PRs #1 and #2 merged 2026-11-16). Nothing merged since.
-- **Branches:** `feature/int8-sleep-model` (draft PR #3, for Farid's review) holds tasks 4, 4a, 4b, 6, 6b and 7a. `feature/demo-display` (task 7d, branched from it; its PR is based on `feature/int8-sleep-model` and gets retargeted to `master` once PR #3 merges) holds the demo display. `feature/palma-review` (draft PR #5) holds the deep-sleep research; `feature/oura-app` (branched from it, draft PR #6) holds the Oura app (task 5). `feature/signal-quality` (branched from it, draft PR #7) adds the live view's signal-quality warning. Stack: #3 → #4 → #5 → #6 → #7, merge in that order. 96 tests pass (90 on `feature/oura-app`).
+- **master** is at `c970443` (2026-11-23): PRs #3 → #7 merged in order as merge commits (by the cloud session, with Farid's one-time authorisation), after PRs #1 and #2 (2026-11-16). Checked on the laptop: 96 tests pass (Sleep-EDF real-data test included, pinned numpy 2.5.4), test vectors regenerate unchanged, `firmware/eeg_node` compiles (400,893 bytes flash, 11 %; 94,904 bytes RAM, 28 %).
+- **Branches:** work branches off `master` from now on. The merged feature branches (`feature/int8-sleep-model`, `feature/demo-display`, `feature/palma-review`, `feature/oura-app`, `feature/signal-quality`) are fully in `master` and can be deleted.
 - **Read first:** `docs/deep-sleep.md` (deep sleep, the demo's lead topic: rule, accuracy of experts/Oura/us, next steps), `docs/palma-mapping.md` (what we take from Palma et al. 2024, and why), `docs/briefs/2026-11-22-demo-display.md` (task 7d), `docs/briefs/2026-11-22-deck-update.md` (everything since 2026-11-21, demo Plan A/B, risks, corrected figures), `docs/model-provenance.md` (where the model and data come from), `docs/bringup.md` (wiring-day checklist); details in the other `docs/briefs/`.
 - **On the XIAO:** the whole chain runs on the board. A replayed held-out night matches Python's stages on 100 % of epochs. The live path (core-0 acquisition → queue → core-1 processing → stages) ran 335 s from a fake 250 Hz source with 0 missed samples. Still to prove with the parts: the ADS1115 I2C reads, the ALERT/RDY interrupt and the ADC's real rate.
 - **Demo:** Friday 2026-11-27, **with Oura data** (Farid, 2026-11-22). Plan A: live headband signal + replayed-night staging + Oura + on-device checks. Plan B (parts late): the same without live signal. In hand: resistors, capacitors, electrodes; the rest (BioAmp EXG Pill, ADS1115, …) is due around 2026-11-26.
@@ -16,8 +16,8 @@ before starting, and update it before you stop.
 - **Oura:** the app works on the laptop (`python -m hub.oura_app login | pull | nights`, see `hub/oura_app/__init__.py`). Signed in 2026-11-22; the first live pull holds 1 night (`nights` shows it; personal values are not copied into the repo). Data in git-ignored `data/oura/live/`; tokens in Windows Credential Manager. Scheduled task 'TinyML Oura pull' pulls at 09:30 and 21:30 (§3); no Oura sign-in needed.
 - **Oura screen:** `scripts/demo_display.py oura` shows everything pulled for a night/day (hypnogram, heart rate and HRV through the night, deep sleep per night, sleep/readiness/activity/stress scores and contributors, heart health once Oura has it); `python -m hub.oura_app day` prints the same values. `--sandbox` uses Oura's sample data. `--demo` shows 14 realistic sample nights (Sleep-EDF expert stages, simulated heart rate and HRV; `tests/fixtures/oura_demo/`, `scripts/make_oura_demo.py`): safe for slides and the fallback if the ring has few nights by the demo.
 - **Live view signal-quality warning (2026-11-22):** banner ✓ Signal OK / ⚠ Check signal / ✕ Bad signal with the reason (electrode off, mains hum, movement, flat line, no data, missed samples); bad stretches tinted, epochs staged from bad signal hatched. Thresholds are starting values until bring-up step 7.
-- **Next work:** task 7 bring-up per `docs/bringup.md` when the parts arrive. Task 7d (demo display) is done: `scripts/demo_display.py`.
-- **Waiting on Farid:** PR #3 review and merge timing (§4 Q10); Docker Desktop install (task 5b, not needed for the demo).
+- **Next work:** demo runbook and Plan B rehearsal (now); task 7 bring-up per `docs/bringup.md` when the parts arrive (~2026-11-26); demo Friday 2026-11-27. Docker hub (task 5b) and overnight recording (phase D) after the demo.
+- **Waiting on Farid:** ring sync for the night of 2026-11-22/23 (Oura has only one live night so far); OK to delete the five merged feature branches; Docker Desktop install (task 5b, after the demo).
 
 ## 1. Who works where
 
@@ -122,6 +122,8 @@ Code: confirm each line, fix anything wrong, fill the blanks, and note the date.
 ## 6. Handoff log
 
 Newest first. One line per change: date, who, what, where.
+
+- 2026-11-23 · Claude Code (laptop) · **PRs #3 → #7 merged** into `master` by the cloud session (Farid's one-time authorisation; merge commits #3 `af57659`, #4 `2eb5d06`, #5 `f916f10`, #6 `1e9ccd0`, #7 `c970443`), after a read-only dry run on the laptop (clean at every step; 47/51/55/90/96 tests). master tree `71435cd` = `feature/signal-quality`. On the laptop with the pinned packages: 96 tests pass (real-data test included; the 2 bit-exact filter tests that failed in the cloud pass here, numpy 2.5.4 vs the cloud's 2.5.3), vectors unchanged, `eeg_node` compiles. Merged branches still on GitHub (the cloud session can't delete branches). Notion updated.
 
 - 2026-11-23 · Claude Code (laptop) · **PR #6 review fixes** (cloud session's review): (1) refresh + save run under a cross-process lock file (`data/oura/.token.lock`, `tokens.TokenLock`), so the scheduled pull and a manual run can't both spend the single-use refresh token; a run that waited uses the token the other saved, and on `invalid_grant` the token is reloaded and used once if another run changed it. (2) `pull` makes the re-pulled window match Oura's answer: stored records in the window that Oura no longer returns (deleted or re-issued sleep periods) are removed (`LocalStore.replace_window`); a failed fetch removes nothing. (3) `logout` checks the revoke answer and prints it (Oura's docs give only the URL form `/oauth/revoke?access_token=...` and no method: GET, POST if 405); the token never appears in messages, even on network errors. (4) `demo_display.py oura --save` refuses a path inside the repo outside `data/` for the ring's data (allowed with `--demo`/`--sandbox`); `reports/oura_live*.png` git-ignored. (5) the sign-in callback page HTML-escapes its text. (6) missing `expires_in` → 1 h. Demo date corrected to **Friday** 2026-11-27 (STATUS, briefs). 10 new tests; real live and sandbox pulls OK. Notion updated.
 
