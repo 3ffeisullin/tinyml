@@ -7,11 +7,11 @@ before starting, and update it before you stop.
 
 ## 0. Resume here
 
-- **master** is at `cef6545` (2026-11-23): PRs #3 → #8 merged in order as merge commits (by the cloud session, with Farid's one-time authorisation), after PRs #1 and #2 (2026-11-16). Checked on the laptop: 96 tests pass (Sleep-EDF real-data test included, pinned numpy 2.5.4), test vectors regenerate unchanged, `firmware/eeg_node` compiles (400,893 bytes flash, 11 %; 94,904 bytes RAM, 28 %).
-- **Branches:** work branches off `master` from now on. The merged feature branches (`feature/int8-sleep-model`, `feature/demo-display`, `feature/palma-review`, `feature/oura-app`, `feature/signal-quality`) are fully in `master` and can be deleted.
+- **master** is at `8c2c586` (2026-11-23): PRs #3 → #9 merged as merge commits (#3–#8 and #9 by the cloud session, each on Farid's explicit one-time instruction; "Farid merges" still applies to every other PR). No PRs open; only `master` exists. Checked on the laptop: 98 tests pass (real-data test included), vectors unchanged, `firmware/eeg_node` compiles (11 % flash, 28 % RAM). New work: a new branch from `master`.
+- **Branches:** only `master`. Merged and deleted: `feature/int8-sleep-model`, `feature/demo-display`, `feature/palma-review`, `feature/oura-app`, `feature/signal-quality`, `docs/post-merge-status`, `feature/demo-runbook`.
 - **Read first:** `docs/deep-sleep.md` (deep sleep, the demo's lead topic: rule, accuracy of experts/Oura/us, next steps), `docs/palma-mapping.md` (what we take from Palma et al. 2024, and why), `docs/briefs/2026-11-22-demo-display.md` (task 7d), `docs/briefs/2026-11-22-deck-update.md` (everything since 2026-11-21, demo Plan A/B, risks, corrected figures), `docs/model-provenance.md` (where the model and data come from), `docs/bringup.md` (wiring-day checklist); details in the other `docs/briefs/`.
 - **On the XIAO:** the whole chain runs on the board. A replayed held-out night matches Python's stages on 100 % of epochs. The live path (core-0 acquisition → queue → core-1 processing → stages) ran 335 s from a fake 250 Hz source with 0 missed samples. Still to prove with the parts: the ADS1115 I2C reads, the ALERT/RDY interrupt and the ADC's real rate.
-- **Demo:** Friday 2026-11-27, **with Oura data** (Farid, 2026-11-22). Plan A: live headband signal + replayed-night staging + Oura + on-device checks. Plan B (parts late): the same without live signal. In hand: resistors, capacitors, electrodes; the rest (BioAmp EXG Pill, ADS1115, …) is due around 2026-11-26.
+- **Demo:** Friday 2026-11-27 (may move to the following week), **with Oura data** (Farid, 2026-11-22). Plan A: live headband signal + replayed-night staging + Oura + on-device checks. Plan B (parts late): the same without live signal. In hand: resistors, capacitors, electrodes; the rest (BioAmp EXG Pill, ADS1115, …) is due around 2026-11-26.
 - **Deep sleep (lead topic):** per night the model is off by ~25 min (`reports/stage_minutes.md`); next experiment is REQ-FEAT-12 (slow-wave/spindle features), see `docs/deep-sleep.md` §6.
 - **Oura:** the app works on the laptop (`python -m hub.oura_app login | pull | nights`, see `hub/oura_app/__init__.py`). Signed in 2026-11-22; the first live pull holds 1 night (`nights` shows it; personal values are not copied into the repo). Data in git-ignored `data/oura/live/`; tokens in Windows Credential Manager. Scheduled task 'TinyML Oura pull' pulls at 09:30 and 21:30 (§3); no Oura sign-in needed.
 - **Oura screen:** `scripts/demo_display.py oura` shows everything pulled for a night/day (hypnogram, heart rate and HRV through the night, deep sleep per night, sleep/readiness/activity/stress scores and contributors, heart health once Oura has it); `python -m hub.oura_app day` prints the same values. `--sandbox` uses Oura's sample data. `--demo` shows 14 realistic sample nights (Sleep-EDF expert stages, simulated heart rate and HRV; `tests/fixtures/oura_demo/`, `scripts/make_oura_demo.py`): safe for slides and the fallback if the ring has few nights by the demo.
@@ -34,6 +34,8 @@ before starting, and update it before you stop.
 
 ## 2. Current state
 
+**master is `8c2c586`** (2026-11-23): PRs #1–#9 merged; **no PRs open**. Checked on the laptop: 98 tests pass, test vectors unchanged, `firmware/eeg_node` compiles (400,893 bytes flash, 11 %; 94,904 bytes RAM, 28 %).
+
 | Phase | Item | Status | Where |
 |---|---|---|---|
 | Setup | Toolchain smoke test (synthetic model on the XIAO) | Done 2026-11-05 | `scripts/smoke_test.py`, `firmware/eeg_smoke/` |
@@ -41,7 +43,7 @@ before starting, and update it before you stop.
 | A | Python reference features (filters, bands incl. sigma, skew, kurtosis, epochs) | Done (merged 2026-11-16); 32 tests pass on the laptop | `eegml/`, `tests/` |
 | A | Firmware test vectors | Done (merged 2026-11-16) | `tests/vectors/`, `firmware/test_vectors/` |
 | A | Sleep-EDF baseline (REQ-ML-02) | **Done 2026-11-16, PASS**: 20 subjects, device features macro F1 0.680 / acc 0.774 vs MNE-tutorial features 0.621 / 0.729 | `reports/sleep_edf_baseline.md` |
-| A | Int8 sleep model + conversion report (REQ-ML-03/04) | **Done 2026-11-21** (draft PR #3). Model v2, running standardisation, per-tensor int8: int8 macro F1 0.707 / acc 0.768 vs RF 0.680 / 0.774; float/int8 agreement 98.68 % (REQ-ML-03 PASS); 6,336 bytes. (v1 with whole-night stats: 0.739 / 0.796, not achievable on the device.) | `scripts/train_sleep_model.py`, `eegml/sleep_model.py`, `reports/sleep_model.md`, `firmware/eeg_node/sleep_model.h` |
+| A | Int8 sleep model + conversion report (REQ-ML-03/04) | **Done 2026-11-21** (PR #3, merged 2026-11-23). Model v2, running standardisation, per-tensor int8: int8 macro F1 0.707 / acc 0.768 vs RF 0.680 / 0.774; float/int8 agreement 98.68 % (REQ-ML-03 PASS); 6,336 bytes. (v1 with whole-night stats: 0.739 / 0.796, not achievable on the device.) | `scripts/train_sleep_model.py`, `eegml/sleep_model.py`, `reports/sleep_model.md`, `firmware/eeg_node/sleep_model.h` |
 | A | Calibration ablation (REQ-FEAT-10) | **Done 2026-11-21**: whole-night stats 0.740 macro F1; first 60 s–10 min 0.45–0.46; running stats (trained that way) 0.710 | `scripts/calibration_ablation.py`, `reports/calibration_ablation.md` |
 | A | Retrain with running standardisation (task 4a, REQ-FEAT-10) | **Done 2026-11-21** | `eegml/sleep_model.py` (`RunningStats`, `running_standardise`), `scripts/train_sleep_model.py` |
 | A | Int8 model on the XIAO (REQ-ML-04: arena used, µs per inference) | **Done 2026-11-21**: parity 5/5 with Python, 224 µs per inference, arena used 956 bytes, model 6,336 bytes; sketch 344 KB flash (10 %), 30.8 KB RAM (9 %) | `firmware/eeg_node/eeg_node.ino`, `reports/xiao_bench_2026-11-21.txt` |
@@ -122,6 +124,8 @@ Code: confirm each line, fix anything wrong, fill the blanks, and note the date.
 ## 6. Handoff log
 
 Newest first. One line per change: date, who, what, where.
+
+- 2026-11-23 · Claude Code (laptop) · **PR #9 merged** by the cloud session (Farid's explicit instruction, this PR only): master `8c2c586`, all PRs #3–#9 in master, none open. Deleted `feature/demo-runbook` and `docs/post-merge-status` on GitHub and locally (both confirmed in `origin/master` first). On a fresh pull: 98 tests pass, vectors unchanged, `eeg_node` compiles at 400,893 bytes flash (11 %) / 94,904 bytes RAM (28 %), identical to before. Next: bring-up ~11-26, then the Plan A dry run (battery only, or the USB isolator with a projector), results into the runbook; demo Friday 2026-11-27 (may move a week). Notion updated.
 
 - 2026-11-23 · Claude Code (laptop) · PRs #3–#8 merged by the cloud session (master `cef6545`); master merged into `feature/demo-runbook` (PR #9, retargeted to master, still draft). Fix from the cloud session's note: `python -m hub.oura_app` now catches a `TokenLock` timeout (`TimeoutError` is an `OSError`, so it escaped `main()`), prints "another Oura pull holds the token lock; try again in a minute" and exits 1; test with a real held lock file. 98 tests pass. Deck numbers (runbook timings, rehearsal results) unchanged. Notion updated.
 
