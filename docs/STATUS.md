@@ -7,8 +7,8 @@ before starting, and update it before you stop.
 
 ## 0. Resume here
 
-- **master** is at `8c2c586` (2026-11-23): PRs #3 → #9 merged as merge commits (#3–#8 and #9 by the cloud session, each on Farid's explicit one-time instruction; "Farid merges" still applies to every other PR). No PRs open; only `master` exists. Checked on the laptop: 98 tests pass (real-data test included), vectors unchanged, `firmware/eeg_node` compiles (11 % flash, 28 % RAM). New work: a new branch from `master`.
-- **Branches:** only `master`. Merged and deleted: `feature/int8-sleep-model`, `feature/demo-display`, `feature/palma-review`, `feature/oura-app`, `feature/signal-quality`, `docs/post-merge-status`, `feature/demo-runbook`.
+- **master** is at `0dc6753` (2026-11-23): PRs #3 → #10 merged as merge commits (#3–#10 by the cloud session, each on Farid's explicit one-time instruction; "Farid merges" still applies to every other PR). Code last changed in #9; #10 was docs only. Checked on the laptop at `8c2c586`: 98 tests pass (real-data test included), vectors unchanged, `firmware/eeg_node` compiles (11 % flash, 28 % RAM). New work: a new branch from `master`.
+- **Branches:** only `master`. Merged and deleted: `feature/int8-sleep-model`, `feature/demo-display`, `feature/palma-review`, `feature/oura-app`, `feature/signal-quality`, `docs/post-merge-status`, `feature/demo-runbook`, `docs/status-after-pr9`.
 - **Read first:** `docs/deep-sleep.md` (deep sleep, the demo's lead topic: rule, accuracy of experts/Oura/us, next steps), `docs/palma-mapping.md` (what we take from Palma et al. 2024, and why), `docs/briefs/2026-11-22-demo-display.md` (task 7d), `docs/briefs/2026-11-22-deck-update.md` (everything since 2026-11-21, demo Plan A/B, risks, corrected figures), `docs/model-provenance.md` (where the model and data come from), `docs/bringup.md` (wiring-day checklist); details in the other `docs/briefs/`.
 - **On the XIAO:** the whole chain runs on the board. A replayed held-out night matches Python's stages on 100 % of epochs. The live path (core-0 acquisition → queue → core-1 processing → stages) ran 335 s from a fake 250 Hz source with 0 missed samples. Still to prove with the parts: the ADS1115 I2C reads, the ALERT/RDY interrupt and the ADC's real rate.
 - **Demo:** Friday 2026-11-27 (may move to the following week), **with Oura data** (Farid, 2026-11-22). Plan A: live headband signal + replayed-night staging + Oura + on-device checks. Plan B (parts late): the same without live signal. In hand: resistors, capacitors, electrodes; the rest (BioAmp EXG Pill, ADS1115, …) is due around 2026-11-26.
@@ -34,7 +34,7 @@ before starting, and update it before you stop.
 
 ## 2. Current state
 
-**master is `8c2c586`** (2026-11-23): PRs #1–#9 merged; **no PRs open**. Checked on the laptop: 98 tests pass, test vectors unchanged, `firmware/eeg_node` compiles (400,893 bytes flash, 11 %; 94,904 bytes RAM, 28 %).
+**master is `0dc6753`** (2026-11-23): PRs #1–#10 merged; **no PRs open** (apart from the STATUS-only PR for this line). Code unchanged since `8c2c586`, checked on the laptop there: 98 tests pass, test vectors unchanged, `firmware/eeg_node` compiles (400,893 bytes flash, 11 %; 94,904 bytes RAM, 28 %).
 
 | Phase | Item | Status | Where |
 |---|---|---|---|
@@ -128,6 +128,8 @@ Code: confirm each line, fix anything wrong, fill the blanks, and note the date.
 ## 6. Handoff log
 
 Newest first. One line per change: date, who, what, where.
+
+- 2026-11-23 · Claude Code (laptop) · **PR #10 merged** by the cloud session (Farid's explicit instruction, this PR only): master `0dc6753`; repo `CLAUDE.md` now has the Privacy, projector-safety, "If the previous session crashed" and "Shared with the cloud session" sections that Farid's recovery prompt relies on. Deleted `docs/status-after-pr9` on GitHub and locally (confirmed in `origin/master` first). Docs only; tests not rerun. Next unchanged: Oura screen check after tonight's ring sync; bring-up ~11-26, then the Plan A dry run; Farid picks the Oura view; demo Friday 2026-11-27 (may move a week). Notion updated.
 
 - 2026-11-23 · Claude Code (laptop) · **Recovery prep** (Farid wants a crash-recovery prompt to work): repo `CLAUDE.md` now has the projector-counts-as-mains rule, a Privacy section (no personal Oura values anywhere; screenshots only under `data/`), an "If the previous session crashed" checklist (stash, worktrees, leftover `data/oura/.token.lock`, a process holding COM5, transcripts) and the cloud-session deck rule. STATUS §3 Oura scopes corrected (`daily heartrate heart_health`), §4 Q10 closed and Q12 added (Oura view in the demo), §5 rows 8 (ring sync check), 7e (Plan A dry run) and 9 (after the demo). Notion updated.
 
