@@ -29,3 +29,24 @@ Oura API v2 integration. Work is shared between a Claude cloud session
 Never suggest a test with electrodes on a person while the board is connected to
 anything mains-powered. USB debugging with electrodes attached only through the
 USB isolator or a laptop running on battery.
+A projector or external monitor connected to the laptop counts as mains: with one
+connected, electrodes on a person only through the USB isolator.
+
+## Privacy
+- Farid's Oura data (sleep, heart rate, HRV, scores) never goes into the repo, PRs, Notion or slides.
+  Screenshots of it only under `data/` (all of `data/` is git-ignored; a test checks it). For anything
+  shown or committed, use `scripts/demo_display.py oura --demo` (sample nights) or `--sandbox`.
+- Never print or paste the Oura client secret or tokens (secret in `.env`, tokens in Windows Credential
+  Manager, service `tinyml-oura`).
+
+## If the previous session crashed
+Rebuild context before changing anything: this file, `git fetch --all --prune`, `git status`,
+`git stash list`, `git worktree list`, `git branch -a`, `gh pr list --state open`, then `docs/STATUS.md`
+(§0 and the top of §6), `docs/demo-runbook.md` and `docs/bringup.md`. Also check for a leftover
+`data/oura/.token.lock` (delete it only if no Oura pull is running) and for a Python process still holding
+COM5. Report what you find and wait for Farid before finishing or discarding anything. The previous
+session's transcript is under `%USERPROFILE%\.claude\projects\` if details are missing.
+
+## Shared with the cloud session
+The cloud session keeps the slide deck. When a demo number changes (test count, rehearsal timings, results),
+send it the new values. "Farid merges" holds unless he explicitly authorises a specific merge.
