@@ -12,7 +12,10 @@ Three views:
   live    The board's own live path (task 7a): log band power and relative alpha over the
           last 2 minutes, from its "W" lines; stages after the 10-epoch warm-up (5 min);
           sample rate and error counters. --source fake needs no sensor; adc / adc-se read
-          the ADS1115 once it's wired (docs/bringup.md).
+          the ADS1115 once it's wired (docs/bringup.md). A signal-quality banner (eegml/quality.py)
+          says when the signal is bad and why (electrode off, mains hum, movement, flat line,
+          no data); bad stretches are tinted red, and epochs staged mostly from bad signal
+          are hatched in the hypnogram.
 
   oura    Everything the Oura ring recorded for one night and day (task 5): Oura's 30 s
           hypnogram, heart rate and HRV through the night, deep sleep per night, and every
@@ -57,6 +60,12 @@ SURFACE, INK, INK2, MUTED, GRID = "#fcfcfb", "#0b0b0b", "#52514e", "#8a8984", "#
 BAND_COLOURS = ["#2a78d6", "#eb6834", "#1baf7a", "#eda100", "#e87ba4", "#008300"]
 BOARD, EXPERTS = "#2a78d6", "#9a9994"
 ALPHA_COLOUR = BAND_COLOURS[2]
+# Status palette (dataviz reference; reserved for state, always paired with an icon and a word).
+STATUS_STYLE = {"ok": ("✓", "Signal OK", "#0ca30c", "#ffffff"),
+                "warn": ("⚠", "Check signal", "#fab219", "#0b0b0b"),
+                "bad": ("✕", "Bad signal", "#d03b3b", "#ffffff"),
+                "none": ("…", "Waiting for data", "#e6e5e1", "#52514e")}
+CRITICAL = STATUS_STYLE["bad"][2]
 
 
 # ---------------------------------------------------------------- parsing
@@ -372,6 +381,13 @@ class LiveView:
             ("line", "Mains (60 Hz) ratio", False), ("clip", "Clipped samples", False)])
         self.parity = ""
         self.source = source
+        from eegml.quality import QualityTracker
+        self.quality = QualityTracker()
+        self.banner = fig.text(0.98, 0.955, "", ha="right", va="center", fontsize=15, weight="bold",
+                               bbox=dict(boxstyle="round,pad=0.45", lw=0))
+        self.reason = fig.text(0.98, 0.905, "", ha="right", va="center", fontsize=10.5, color=INK)
+        self._shades = []
+        self.win_bad = deque(maxlen=self.WINDOW_S * 2)
         self.win = deque(maxlen=self.WINDOW_S * 2)
         self.stages = {}
         self.started = None
@@ -382,11 +398,15 @@ class LiveView:
         if kind == "win":
             self.win.append(ev[1:])
             self.last_t = ev[1]
+            wq = self.quality.add_window(ev[1], ev[4], ev[5], ev[6], time.time())
+            self.win_bad.append(wq.level == "bad")
         elif kind == "out":
             self.stages[ev[1]] = ev[2]
         elif kind == "stat":
             s = ev[1]
             self.panel.set("rate", f"{s.get('rate', 0):.2f} Hz")
+            if "missed" in s:
+                self.quality.add_stat(s["missed"], time.time())
             self.panel.set("errors", f"{s.get('missed', 0):.0f} / {s.get('i2c_errors', 0):.0f} / "
                                      f"{s.get('queue_full', 0):.0f}")
         elif kind == "started":
@@ -401,7 +421,36 @@ class LiveView:
             self.sub.set_text("Error: " + ev[1])
             self.sub.set_color("#e34948")
 
+    def update_quality(self, now=None):
+        level, msg = self.quality.status(time.time() if now is None else now)
+        icon, word, bg, fg = STATUS_STYLE[level]
+        self.banner.set_text(f"{icon}  {word}")
+        self.banner.set_color(fg)
+        self.banner.get_bbox_patch().set_facecolor(bg)
+        if self.source == "fake" and "mains hum" in msg.lower():
+            msg += "  (expected: the fake test signal carries 60 Hz hum on purpose)"
+        self.reason.set_text("" if level == "ok" else msg)
+        for s in self._shades:
+            s.remove()
+        self._shades = []
+        if self.win:
+            t = np.array([r[0] for r in self.win]) - self.last_t
+            bad = np.array(self.win_bad, dtype=bool)
+            if bad.any():
+                for ax in (self.ax_pow, self.ax_alpha):
+                    self._shades.append(ax.fill_between(t, 0, 1, where=bad, step="mid", color=CRITICAL, alpha=0.13,
+                                                        lw=0, transform=ax.get_xaxis_transform()))
+        bad_ep = self.quality.bad_epochs()
+        for e in bad_ep:
+            self._shades.append(self.ax_hyp.axvspan(e * EPOCH_S / 60, (e + 1) * EPOCH_S / 60, color=CRITICAL,
+                                                    alpha=0.12, hatch="///", lw=0))
+        self.ax_hyp.set_title(f"Stages from the board (first stage after {WARMUP} epochs = 5 min)"
+                              + ("   ·   hatched = staged from bad signal, unreliable" if bad_ep else ""),
+                              loc="left", color=INK, fontsize=11)
+        return level
+
     def redraw(self):
+        self.update_quality()
         if not self.win:
             return
         w = np.array([[r[0], *r[1], r[2], r[3], r[4], r[5]] for r in self.win])
@@ -413,9 +462,11 @@ class LiveView:
         self.alpha_line.set_data(t, w[:, 7])
         cur = w[-1]
         self.panel.set("alpha", f"{cur[7]:.2f}")
-        self.panel.set("ptp", f"{cur[8]:.0f} µV")
-        self.panel.set("line", f"{cur[9]:.2f}")
-        self.panel.set("clip", f"{100 * cur[10]:.1f} %")
+        from eegml.quality import classify_window
+        mark = {"ok": "", "warn": "  ⚠", "bad": "  ✕"}       # icon beside the value; text stays ink
+        self.panel.set("ptp", f"{cur[8]:.0f} µV" + mark[classify_window(cur[8], 0.0, 0.0).level])
+        self.panel.set("line", f"{cur[9]:.2f}" + mark[classify_window(50.0, cur[9], 0.0).level])
+        self.panel.set("clip", f"{100 * cur[10]:.1f} %" + mark[classify_window(50.0, 0.0, cur[10]).level])
         if self.stages:
             ts = sorted(self.stages)
             x = np.array(ts + [ts[-1] + 1]) * EPOCH_S / 60

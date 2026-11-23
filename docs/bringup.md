@@ -77,6 +77,18 @@ Requirement IDs refer to `docs/requirements.md`.
       relative alpha** (the classic demo signal). Blinks show as large peak-to-peak in eyes-open windows.
 - [ ] Mains ratio (`line_ratio`) stays low; if not, shorten leads and move away from mains cables.
 
+## 7. Signal-quality thresholds (REQ-FEAT-08 flags)
+
+The live view's banner (`demo_display.py live --source adc`) uses starting values in `eegml/config.py`
+(`QualitySpec`). Set them from this front end, after the gain calibration (step 5), still battery or isolator only:
+- [ ] Good contact, eyes open, 2 min: note the typical and largest `ptp` (blinks) and `line_ratio`. The banner
+      should stay "Signal OK" apart from brief "Check signal" on blinks.
+- [ ] Lift one electrode for 10 s, then the reference for 10 s: the banner must turn "Bad signal" within ~3 s
+      and name the cause; note `ptp` and `line_ratio` while off.
+- [ ] Tap the cable and chew for 10 s: "Check signal" or "Bad signal" for movement.
+- [ ] Put the thresholds between the good and the off values in `QualitySpec`, then run
+      `scripts/export_test_vectors.py` and `python -m pytest`, and record the values in `docs/STATUS.md` §3.
+
 ## Already verified without hardware (task 7a, 2026-11-22)
 
 `LIVE FAKE` runs the same core-0 task and queue at 250 Hz from a timer. On the XIAO (335 s, log
