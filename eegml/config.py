@@ -71,3 +71,28 @@ ADC_FALLBACK_PGA_FS_V = 4.096
 # signal (REQ-ACQ-01). Staging is insensitive to it (running standardisation removes a
 # constant log-power offset); absolute uV readouts and clip thresholds are not.
 PILL_GAIN = 1000.0
+
+
+# REQ-FEAT-08 (flags), groundwork for REQ-ML-05: signal-quality thresholds on the per-window
+# metrics (filtered peak-to-peak, mains ratio on the unfiltered window, clip fraction).
+# STARTING VALUES, not yet measured on this front end: set them at bring-up from a good-contact
+# recording and an electrode-off recording (docs/bringup.md). The uV limits scale with PILL_GAIN,
+# which is itself a placeholder; the mains ratio and clip fraction don't depend on it.
+# Note: in differential mode the Pill output saturates (~+-1.65 V) before the ADC's +-2.048 V, so
+# an off electrode usually shows as huge peak-to-peak and mains hum rather than as ADC clipping.
+@dataclass(frozen=True)
+class QualitySpec:
+    flat_ptp_uv: float = 2.0          # below: flat line (Pill unpowered, inputs shorted, lead cut)
+    high_ptp_warn_uv: float = 200.0   # above: blink or movement (forehead EEG is mostly < 150 uV)
+    high_ptp_bad_uv: float = 500.0    # above: electrode off, cable tug or Pill saturating
+    line_warn: float = 0.5            # mains power / 0.5-30 Hz power
+    line_bad: float = 2.0             # mains dominates: electrode loose or not on skin
+    clip_warn: float = 0.0            # any sample within 2 % of ADC full scale
+    clip_bad: float = 0.01
+    persist_windows: int = 5          # judge the last 5 one-second windows...
+    bad_min: int = 3                  # ...3 bad ones make the status bad (one blink never does)
+    stale_s: float = 3.0              # no window for this long: "no data"
+    epoch_bad_frac: float = 0.5       # an epoch with more bad windows than this is marked unreliable
+
+
+QUALITY = QualitySpec()
