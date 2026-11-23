@@ -1,0 +1,212 @@
+{
+ "demo-readiness-2026-11-09": {
+  "contributors": {
+   "hrv_balance": 78,
+   "previous_night": 78,
+   "recovery_index": 88,
+   "resting_heart_rate": 83,
+   "sleep_balance": 83
+  },
+  "day": "2026-11-09",
+  "id": "demo-readiness-2026-11-09",
+  "score": 82,
+  "synthetic": true,
+  "temperature_deviation": 0.03,
+  "timestamp": "2026-11-09T10:37:30Z"
+ },
+ "demo-readiness-2026-11-10": {
+  "contributors": {
+   "hrv_balance": 79,
+   "previous_night": 83,
+   "recovery_index": 89,
+   "resting_heart_rate": 68,
+   "sleep_balance": 88
+  },
+  "day": "2026-11-10",
+  "id": "demo-readiness-2026-11-10",
+  "score": 81,
+  "synthetic": true,
+  "temperature_deviation": 0.08,
+  "timestamp": "2026-11-10T12:53:30Z"
+ },
+ "demo-readiness-2026-11-11": {
+  "contributors": {
+   "hrv_balance": 76,
+   "previous_night": 84,
+   "recovery_index": 87,
+   "resting_heart_rate": 73,
+   "sleep_balance": 89
+  },
+  "day": "2026-11-11",
+  "id": "demo-readiness-2026-11-11",
+  "score": 82,
+  "synthetic": true,
+  "temperature_deviation": 0.09,
+  "timestamp": "2026-11-11T13:13:00Z"
+ },
+ "demo-readiness-2026-11-12": {
+  "contributors": {
+   "hrv_balance": 76,
+   "previous_night": 81,
+   "recovery_index": 87,
+   "resting_heart_rate": 68,
+   "sleep_balance": 86
+  },
+  "day": "2026-11-12",
+  "id": "demo-readiness-2026-11-12",
+  "score": 80,
+  "synthetic": true,
+  "temperature_deviation": 0.06,
+  "timestamp": "2026-11-12T11:57:00Z"
+ },
+ "demo-readiness-2026-11-13": {
+  "contributors": {
+   "hrv_balance": 92,
+   "previous_night": 81,
+   "recovery_index": 95,
+   "resting_heart_rate": 72,
+   "sleep_balance": 86
+  },
+  "day": "2026-11-13",
+  "id": "demo-readiness-2026-11-13",
+  "score": 85,
+  "synthetic": true,
+  "temperature_deviation": 0.06,
+  "timestamp": "2026-11-13T14:41:30Z"
+ },
+ "demo-readiness-2026-11-14": {
+  "contributors": {
+   "hrv_balance": 79,
+   "previous_night": 62,
+   "recovery_index": 89,
+   "resting_heart_rate": 68,
+   "sleep_balance": 67
+  },
+  "day": "2026-11-14",
+  "id": "demo-readiness-2026-11-14",
+  "score": 73,
+  "synthetic": true,
+  "temperature_deviation": -0.13,
+  "timestamp": "2026-11-14T08:57:00Z"
+ },
+ "demo-readiness-2026-11-15": {
+  "contributors": {
+   "hrv_balance": 73,
+   "previous_night": 74,
+   "recovery_index": 86,
+   "resting_heart_rate": 70,
+   "sleep_balance": 79
+  },
+  "day": "2026-11-15",
+  "id": "demo-readiness-2026-11-15",
+  "score": 76,
+  "synthetic": true,
+  "temperature_deviation": -0.01,
+  "timestamp": "2026-11-15T11:23:00Z"
+ },
+ "demo-readiness-2026-11-16": {
+  "contributors": {
+   "hrv_balance": 86,
+   "previous_night": 90,
+   "recovery_index": 92,
+   "resting_heart_rate": 81,
+   "sleep_balance": 95
+  },
+  "day": "2026-11-16",
+  "id": "demo-readiness-2026-11-16",
+  "score": 89,
+  "synthetic": true,
+  "temperature_deviation": 0.15,
+  "timestamp": "2026-11-16T12:36:30Z"
+ },
+ "demo-readiness-2026-11-17": {
+  "contributors": {
+   "hrv_balance": 88,
+   "previous_night": 83,
+   "recovery_index": 93,
+   "resting_heart_rate": 83,
+   "sleep_balance": 88
+  },
+  "day": "2026-11-17",
+  "id": "demo-readiness-2026-11-17",
+  "score": 87,
+  "synthetic": true,
+  "temperature_deviation": 0.08,
+  "timestamp": "2026-11-17T13:17:30Z"
+ },
+ "demo-readiness-2026-11-18": {
+  "contributors": {
+   "hrv_balance": 80,
+   "previous_night": 96,
+   "recovery_index": 89,
+   "resting_heart_rate": 68,
+   "sleep_balance": 100
+  },
+  "day": "2026-11-18",
+  "id": "demo-readiness-2026-11-18",
+  "score": 87,
+  "synthetic": true,
+  "temperature_deviation": 0.21,
+  "timestamp": "2026-11-18T14:17:00Z"
+ },
+ "demo-readiness-2026-11-19": {
+  "contributors": {
+   "hrv_balance": 80,
+   "previous_night": 79,
+   "recovery_index": 89,
+   "resting_heart_rate": 67,
+   "sleep_balance": 84
+  },
+  "day": "2026-11-19",
+  "id": "demo-readiness-2026-11-19",
+  "score": 80,
+  "synthetic": true,
+  "temperature_deviation": 0.04,
+  "timestamp": "2026-11-19T13:02:00Z"
+ },
+ "demo-readiness-2026-11-20": {
+  "contributors": {
+   "hrv_balance": 91,
+   "previous_night": 83,
+   "recovery_index": 94,
+   "resting_heart_rate": 62,
+   "sleep_balance": 88
+  },
+  "day": "2026-11-20",
+  "id": "demo-readiness-2026-11-20",
+  "score": 84,
+  "synthetic": true,
+  "temperature_deviation": 0.08,
+  "timestamp": "2026-11-20T12:09:00Z"
+ },
+ "demo-readiness-2026-11-21": {
+  "contributors": {
+   "hrv_balance": 88,
+   "previous_night": 83,
+   "recovery_index": 93,
+   "resting_heart_rate": 78,
+   "sleep_balance": 88
+  },
+  "day": "2026-11-21",
+  "id": "demo-readiness-2026-11-21",
+  "score": 86,
+  "synthetic": true,
+  "temperature_deviation": 0.08,
+  "timestamp": "2026-11-21T12:43:00Z"
+ },
+ "demo-readiness-2026-11-22": {
+  "contributors": {
+   "hrv_balance": 72,
+   "previous_night": 85,
+   "recovery_index": 85,
+   "resting_heart_rate": 80,
+   "sleep_balance": 90
+  },
+  "day": "2026-11-22",
+  "id": "demo-readiness-2026-11-22",
+  "score": 82,
+  "synthetic": true,
+  "temperature_deviation": 0.1,
+  "timestamp": "2026-11-22T12:24:30Z"
+ }
+}

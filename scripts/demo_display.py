@@ -1,6 +1,6 @@
 """Laptop demo display (task 7d): what the XIAO is doing, live, in one window.
 
-Two views:
+Three views:
 
   replay  The board stages a Sleep-EDF night streamed to it over USB (same path as
           scripts/replay_night.py). The board's hypnogram builds up epoch by epoch next to
@@ -13,6 +13,14 @@ Two views:
           last 2 minutes, from its "W" lines; stages after the 10-epoch warm-up (5 min);
           sample rate and error counters. --source fake needs no sensor; adc / adc-se read
           the ADS1115 once it's wired (docs/bringup.md).
+
+  oura    Everything the Oura ring recorded for one night and day (task 5): Oura's 30 s
+          hypnogram, heart rate and HRV through the night, deep sleep per night, and every
+          score and value the app has pulled (sleep, readiness, activity, stress, heart
+          health). Reads data/oura/live (run `python -m hub.oura_app pull` first);
+          --sandbox shows Oura's sample data instead; --demo shows 14 realistic sample nights
+          (Sleep-EDF expert stages, simulated heart rate and HRV; scripts/make_oura_demo.py),
+          safe to share and the fallback if the ring has few nights.
 
     .\\venv\\Scripts\\python.exe scripts\\demo_display.py replay --port COM5
     .\\venv\\Scripts\\python.exe scripts\\demo_display.py replay --port none
@@ -424,6 +432,150 @@ class LiveView:
 
 
 # ---------------------------------------------------------------- main
+# ---------------------------------------------------------------- Oura view
+def mdates_num(t):
+    import matplotlib.dates as mdates
+    return mdates.date2num(t)
+
+
+REPO = Path(__file__).resolve().parents[1]
+
+
+def live_save_allowed(path) -> bool:
+    """Privacy guard for the ring's real data: inside the repo, a PNG may only go under data/ (git-ignored).
+    Paths outside the repo (e.g. Desktop) are the user's own choice."""
+    p = Path(path).resolve()
+    if not p.is_relative_to(REPO):
+        return True
+    return p.is_relative_to(REPO / "data")
+
+
+DEMO_DIR = Path(__file__).resolve().parents[1] / "tests" / "fixtures" / "oura_demo"
+DEMO_SOURCE = "Sample nights: Sleep-EDF expert sleep stages, simulated heart rate, HRV and scores"
+OURA_ROWS = {"awake": 3, "REM": 2, "light": 1, "deep": 0}
+OURA_TICKS = ([3, 2, 1, 0], ["Awake", "REM", "Light", "Deep"])
+
+
+def _break_gaps(ts, ys):
+    """Insert a NaN wherever consecutive samples are more than 1.5 steps apart, so a line stops at a gap."""
+    if len(ts) < 3:
+        return list(ts), list(ys)
+    steps = np.diff([mdates_num(t) for t in ts])
+    lim = 1.5 * float(np.median(steps))
+    out_t, out_y = [ts[0]], [ys[0]]
+    for k in range(1, len(ts)):
+        if steps[k - 1] > lim:
+            out_t.append(ts[k - 1] + (ts[k] - ts[k - 1]) / 2)
+            out_y.append(np.nan)
+        out_t.append(ts[k])
+        out_y.append(ys[k])
+    return out_t, out_y
+
+
+class OuraView:
+    """Static page: one Oura day. Single-series charts share one accent; text wears ink tokens."""
+
+    finished = True
+
+    def __init__(self, fig, v, source):
+        from datetime import timedelta, timezone
+        import matplotlib.dates as mdates
+        from hub.oura_app.report import day_lines
+        self.fig = fig
+        off = (v["night"] or {}).get("utc_offset", "+00:00")
+        tz = timezone(timedelta(hours=int(off[:3]), minutes=int(off[0] + off[4:])))
+        gs = fig.add_gridspec(4, 3, width_ratios=[3.0, 1.05, 1.05], height_ratios=[1.15, 1, 1, 0.9],
+                              left=0.06, right=0.99, top=0.85, bottom=0.07, hspace=0.8, wspace=0.12)
+        fig.text(0.06, 0.955, f"Oura ring · night ending {v['day']}", color=INK, fontsize=16, weight="bold")
+        fig.text(0.06, 0.92, f"{source}. Context only: Oura stages sleep from heart rate, HRV, movement and "
+                 "temperature, not EEG; light = N1 + N2.", color=INK2, fontsize=9.5)
+        fmt = mdates.DateFormatter("%H:%M", tz=tz)
+
+        ax = fig.add_subplot(gs[0, 0])
+        style_axes(ax)
+        ax.set_title("Sleep stages (Oura, 30 s)", loc="left", color=INK, fontsize=11)
+        ax.set_yticks(*OURA_TICKS)
+        ax.set_ylim(-0.5, 3.5)
+        hyp = v["hypnogram"]
+        if hyp:
+            ts = [h[0] for h in hyp] + [hyp[-1][0] + (hyp[1][0] - hyp[0][0] if len(hyp) > 1 else timedelta(0))]
+            ys = [OURA_ROWS.get(s, 3) for _, s in hyp]
+            ax.step(ts, ys + ys[-1:], where="post", color=GRID, lw=1.0, zorder=1)
+            # one block per run of the same stage: sleep in the accent, awake in grey, so stretches read at a glance
+            runs, i = [], 0
+            while i < len(hyp):
+                j = i
+                while j + 1 < len(hyp) and hyp[j + 1][1] == hyp[i][1]:
+                    j += 1
+                runs.append((ts[i], ts[j + 1], hyp[i][1]))
+                i = j + 1
+            for t0, t1, s in runs:
+                row = OURA_ROWS.get(s, 3)
+                ax.fill_between([t0, t1], row - 0.32, row + 0.32, color=EXPERTS if s == "awake" else BOARD,
+                                lw=0, zorder=2)
+                if s == "deep":
+                    ax.axvspan(t0, t1, color=BOARD, alpha=0.10, lw=0, zorder=0)
+        ax.xaxis.set_major_formatter(fmt)
+        self._series(fig.add_subplot(gs[1, 0], sharex=ax), v["hr"], "Heart rate through the night", "bpm", fmt)
+        self._series(fig.add_subplot(gs[2, 0], sharex=ax), v["hrv"], "HRV through the night (RMSSD)", "ms", fmt)
+
+        axd = fig.add_subplot(gs[3, 0])
+        style_axes(axd, "min")
+        axd.set_title("Deep sleep per night (Oura)", loc="left", color=INK, fontsize=11)
+        tr = v["trend"][-30:]
+        if tr:
+            x = np.arange(len(tr))
+            vals = [r["deep_min"] for r in tr]
+            axd.bar(x, vals, width=0.6, color=[BOARD if r["day"] == v["day"] else "#9ec3ec" for r in tr])
+            axd.set_xticks(x, [r["day"][5:] for r in tr], fontsize=8)
+            for xi, val in zip(x, vals):
+                axd.text(xi, val, f"{val:.0f}", ha="center", va="bottom", color=INK2, fontsize=8)
+            axd.set_ylim(0, max(vals) * 1.3 + 1)
+            axd.set_xlim(-0.6, max(len(tr), 14) - 0.4)          # keep bars thin when there are few nights
+            if len(tr) < 3:
+                axd.text(0.99, 0.95, f"{len(tr)} night{'s' if len(tr) > 1 else ''} so far; fills in as the ring "
+                         "syncs", color=MUTED, fontsize=9, ha="right", va="top", transform=axd.transAxes)
+
+        rows = day_lines(v)
+        cut = next((i for i, (lab, _) in enumerate(rows) if lab == "Readiness score"), len(rows))
+        for col, chunk in ((1, rows[:cut]), (2, rows[cut:])):
+            axt = fig.add_subplot(gs[:, col])
+            axt.axis("off")
+            y = 1.0
+            for lab, val in chunk:
+                sub = lab.startswith("  ")
+                axt.text(0.0, y, lab.strip(), color=MUTED if sub else INK2, fontsize=8.5 if sub else 9.5,
+                         va="top", transform=axt.transAxes)
+                axt.text(1.0, y, val, color=INK, fontsize=8.5 if sub else 10.5, ha="right", va="top",
+                         weight="normal" if sub else "bold", transform=axt.transAxes)
+                y -= 0.03 if sub else 0.038
+            if not chunk:
+                axt.text(0, 1, "not pulled yet", color=MUTED, fontsize=9.5, va="top", transform=axt.transAxes)
+
+    @staticmethod
+    def _series(ax, pts, title, unit, fmt):
+        style_axes(ax, unit)
+        ax.set_title(title, loc="left", color=INK, fontsize=11)
+        if pts:
+            ts, ys = zip(*pts)
+            ax.plot(*_break_gaps(ts, ys), color=BOARD, lw=2)        # no line across missing 5-min values
+            i = int(np.argmin(ys)) if unit == "bpm" else int(np.argmax(ys))
+            ax.plot([ts[i]], [ys[i]], "o", ms=7, color=BOARD, mec=SURFACE, mew=2)
+            ax.set_title(f"{title}  ·  5-min values: {'lowest' if unit == 'bpm' else 'highest'} {ys[i]:.0f} {unit} "
+                         f"at {fmt(mdates_num(ts[i]))}, mean {np.mean(ys):.0f}", loc="left", color=INK, fontsize=11)
+            pad = (max(ys) - min(ys)) * 0.25 + 1
+            ax.set_ylim(min(ys) - pad, max(ys) + pad)
+        else:
+            ax.text(0.5, 0.5, "no data for this night", color=MUTED, ha="center", va="center", transform=ax.transAxes)
+        ax.xaxis.set_major_formatter(fmt)
+
+    def on(self, _msg):
+        pass
+
+    def redraw(self):
+        pass
+
+
 def main():
     sys.stdout.reconfigure(encoding="utf-8", errors="replace")
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
@@ -438,7 +590,13 @@ def main():
     l_.add_argument("--source", choices=LIVE_COMMANDS, default="fake")
     l_.add_argument("--port", default="COM5")
     l_.add_argument("--seconds", type=float, default=0, help="stop after this long (0 = until the window closes)")
-    for p in (r, l_):
+    o = sub.add_parser("oura", help="everything the Oura ring recorded for one night and day")
+    o.add_argument("--day", help="YYYY-MM-DD (default: latest stored night)")
+    src = o.add_mutually_exclusive_group()
+    src.add_argument("--sandbox", action="store_true", help="Oura's sample data instead of the ring's")
+    src.add_argument("--demo", action="store_true",
+                     help="14 sample nights: Sleep-EDF expert stages, simulated heart rate and HRV (no personal data)")
+    for p in (r, l_, o):
         p.add_argument("--save", type=Path, help="write a PNG at the end")
         p.add_argument("--headless", action="store_true", help="no window (needs --save)")
     a = ap.parse_args()
@@ -456,6 +614,27 @@ def main():
         fig.canvas.manager.set_window_title("XIAO EEG demo")
     except AttributeError:
         pass
+    if a.mode == "oura":
+        from hub.oura_app.config import DATA_DIR
+        from hub.oura_app.data import LocalStore, day_view
+        if a.save and not (a.demo or a.sandbox) and not live_save_allowed(a.save):
+            sys.exit(f"Refusing to save the ring's data to {a.save}: inside the repo, a screenshot of real Oura data "
+                     "may only go under data/ (git-ignored). Use e.g. --save data/oura/screen.png, or --demo / "
+                     "--sandbox for an image to commit.")
+        root = DEMO_DIR if a.demo else DATA_DIR / ("sandbox" if a.sandbox else "live")
+        v = day_view(LocalStore(root), a.day)
+        if not v["day"]:
+            sys.exit("No Oura nights stored: run `python -m hub.oura_app pull` first"
+                     + (" (or scripts/make_oura_demo.py for --demo)." if a.demo else "."))
+        OuraView(fig, v, DEMO_SOURCE if a.demo else
+                 "Oura sandbox (sample data)" if a.sandbox else "Farid's ring, via the Oura API v2")
+        if a.save:
+            a.save.parent.mkdir(parents=True, exist_ok=True)
+            fig.savefig(a.save, dpi=110, facecolor=SURFACE)
+            print(f"saved {a.save}")
+        if not a.headless:
+            plt.show()
+        return
     q, stop = queue.Queue(), threading.Event()
     if a.mode == "replay":
         view = ReplayView(fig)

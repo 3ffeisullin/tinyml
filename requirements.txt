@@ -9,3 +9,5 @@ mne          # EEG loading, filtering, epoching (EDF/BDF/FIF, public datasets)
 ipykernel    # use venv as a Jupyter kernel
 pytest       # tests/ (python -m pytest)
 pyserial     # scripts/replay_night.py talks to the XIAO over USB serial
+keyring      # hub/oura_app keeps Oura tokens in Windows Credential Manager (REQ-OURA-03)
+requests     # hub/oura_app HTTP client
