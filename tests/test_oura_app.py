@@ -464,3 +464,24 @@ def test_everything_under_data_is_git_ignored():
     for p in ("data/rehearsal/oura.png", "data/oura/screen.png", "data/anything/x.json"):
         r = subprocess.run(["git", "check-ignore", "-q", p], cwd=root)
         assert r.returncode == 0, f"{p} is not git-ignored"
+
+
+def test_cli_reports_a_held_token_lock_and_exits_non_zero(tmp_path, monkeypatch, capsys):
+    """A real TokenLock times out because another run holds the lock file; main() says so and returns 1."""
+    import hub.oura_app.__main__ as cli
+    from hub.oura_app.tokens import TokenLock
+    held = tmp_path / ".token.lock"
+    held.write_text("4242")                                            # fresh lock held by "another run"
+
+    def pull_that_needs_the_lock(*a, **kw):
+        with TokenLock(held, timeout_s=0.3, stale_s=1e9):
+            pass
+
+    monkeypatch.setattr(cli, "load_settings", lambda: S)
+    monkeypatch.setattr(cli, "KeyringStore", lambda: MemoryStore(token()))
+    monkeypatch.setattr(cli, "pull", pull_that_needs_the_lock)
+    monkeypatch.setattr(cli, "DATA_DIR", tmp_path)
+    assert cli.main(["pull"]) == 1
+    err = capsys.readouterr().err
+    assert "another Oura pull holds the token lock; try again in a minute" in err
+    assert held.exists()                                               # the other run's lock is left alone

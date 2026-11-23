@@ -105,6 +105,9 @@ def main(argv=None):
             store.delete()
             print(f"Signed out: {outcome}; tokens deleted from Windows Credential Manager.")
         return 0
+    except TimeoutError:                    # TokenLock: the scheduled pull (or another run) is refreshing the token
+        print("Error: another Oura pull holds the token lock; try again in a minute.", file=sys.stderr)
+        return 1
     except (ConfigError, auth.AuthError, RuntimeError) as e:
         print(f"Error: {e}", file=sys.stderr)
         return 1
