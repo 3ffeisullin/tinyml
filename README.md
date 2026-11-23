@@ -17,7 +17,7 @@ Seeed XIAO ESP32-S3 with TensorFlow Lite Micro. (Qualcomm/Snapdragon work is a s
 | A · Model on the XIAO | Done: outputs match Python 5/5, 224 µs per inference, 956-byte arena (REQ-ML-04) |
 | B · Firmware (`eeg_node`) | The whole chain runs on the board: on a replayed held-out night its stages match Python on 100 % of epochs (REQ-FEAT-06/09/10). Acquisition firmware ready and verified with a fake 250 Hz source (task 7a); wiring and bring-up next (`docs/bringup.md`); parts due around 2026-11-26; demo 2026-11-27 |
 | B · Demo display | Done (task 7d, branch `feature/demo-display`): replayed night and live views, `scripts/demo_display.py` |
-| C · Oura app and hub | Oura app works on the laptop (sign-in, pull, sandbox; `hub/oura_app/`, 2026-11-22); hub needs Docker (after the demo) |
+| C · Oura app and hub | Oura app works on the laptop (sign-in, pull of all granted data, sandbox; `hub/oura_app/`); Oura screen `scripts/demo_display.py oura` (2026-11-22); hub needs Docker (after the demo) |
 | D · Overnight recording | Not started |
 
 Latest work: [`docs/deep-sleep.md`](docs/deep-sleep.md) (deep sleep: the rule, how well it can be measured, where we stand), [`docs/palma-mapping.md`](docs/palma-mapping.md) (what we use from Palma et al. 2024), [`docs/briefs/2026-11-22-demo-display.md`](docs/briefs/2026-11-22-demo-display.md) (demo display), [`docs/briefs/2026-11-22-deck-update.md`](docs/briefs/2026-11-22-deck-update.md) (summary since 2026-11-21, demo plan), [`docs/briefs/2026-11-22-acquisition.md`](docs/briefs/2026-11-22-acquisition.md), wiring-day checklist [`docs/bringup.md`](docs/bringup.md), [`docs/briefs/2026-11-21-end-to-end-replay.md`](docs/briefs/2026-11-21-end-to-end-replay.md), [`docs/briefs/2026-11-21-feature-parity.md`](docs/briefs/2026-11-21-feature-parity.md) and [`docs/briefs/2026-11-21-int8-sleep-model.md`](docs/briefs/2026-11-21-int8-sleep-model.md).
@@ -81,6 +81,7 @@ Project Status & Handoff", mirrors the status file.
 .\venv\Scripts\python.exe scripts\live_log.py --mode fake --seconds 60     # live path with a fake 250 Hz source
 .\venv\Scripts\python.exe scripts\demo_display.py replay --port COM5       # demo: board stages a held-out night (--port none: no board)
 .\venv\Scripts\python.exe scripts\demo_display.py live --source fake       # demo: live band power (--source adc once wired)
+.\venv\Scripts\python.exe scripts\demo_display.py oura                     # demo: everything from the Oura ring (after `python -m hub.oura_app pull`)
 .\venv\Scripts\python.exe scripts\smoke_test.py
 
 # Board side (or open firmware/eeg_smoke in Arduino IDE, board "XIAO_ESP32S3")
