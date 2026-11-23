@@ -40,7 +40,8 @@ Plan B has no electrodes and no restrictions.
 2. Close other apps, turn on Windows "Do not disturb", set display scaling so the window fits the projector.
 3. Plug in the XIAO (data cable; isolator if Plan A with a projector). Check the port:
    `& $cli board list` → "COM5 … ESP32 Family Device". If it shows another COMx, use that below.
-4. Warm-up run (also warms Python/TensorFlow start-up): `demo_display.py replay --port COM5 --max-epochs 20`,
+4. Board self-test (optional, 1 s): send `TEST` over the serial port (e.g. with `scripts/live_log.py`-style pyserial, or Arduino IDE Serial Monitor) → "FEATURE SUMMARY PASS" and "MODEL SUMMARY parity 5/5". After bring-up the boot log must say "ADC found at 0x48".
+5. Warm-up run (also warms Python/TensorFlow start-up): `demo_display.py replay --port COM5 --max-epochs 20`,
    close it.
 
 All commands below run from `C:\Users\ffeis\tinyml` with `.\venv\Scripts\python.exe scripts\demo_display.py …`.
@@ -141,4 +142,5 @@ macro F1 0.707. Next: overnight recordings next to the ring (phase D), deep-slee
 | 2026-11-23 | same | Live, fake source, 75 s | 249.99 Hz, 0/0/0, fake-source check PASS, banner ⚠ mains hum with the "expected" note |
 | 2026-11-23 | same | Replay fallback `--port none`, 120 epochs | starts and finishes in ~11 s |
 | 2026-11-23 | same | Oura screen, own data and `--demo` | ~2.5 s each; `--save` into `reports/` correctly refused for own data; token valid ~30 days |
+| 2026-11-23 | same | On-board self-tests (`TEST` command over USB) | filters within 6.5e-08 of full scale, 0/20 features out of tolerance (worst 0.004 of tolerance), 17 µs/sample, 5.2 ms/window; model parity 5/5, 224 µs/inference, arena 956 bytes; boot reports "ADC NOT found at 0x48" (expected: no ADS1115 yet) |
 | | | Plan A (headband) | after bring-up, ~11-26 |
