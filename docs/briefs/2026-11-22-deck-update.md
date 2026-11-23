@@ -28,7 +28,7 @@ The deck prompt was written after task 6, while task 6b was in progress. Since t
 | Task 7d (laptop demo display) | **Next**, approved by Farid: live band powers / relative alpha from the board, and a hypnogram that builds up epoch by epoch as the board stages a replayed night. |
 | Task 5 (Oura app) | **Needed for the demo** now. Plain Python on the laptop (no Docker): OAuth sign-in, pull the last night's sleep stages. Blocked until the Oura developer app is registered (open question for Farid). |
 | Parts | In hand: resistors, capacitors, electrodes. Ordered: BioAmp EXG Pill, ADS1115 and the rest, **due around 2026-11-26**, one day before the demo. |
-| Demo | **Thursday 2026-11-27.** |
+| Demo | **Friday 2026-11-27.** |
 | PR #3 | Draft, not merged; holds tasks 4–7a. |
 
 ### Demo plan

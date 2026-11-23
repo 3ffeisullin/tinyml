@@ -30,7 +30,7 @@ based on that branch and gets retargeted to `master` once PR #3 merges).
   lost.
 - Tests: `tests/test_demo_display.py` checks the parser against every line format the firmware prints. 51 tests pass.
 
-## For the demo (Thursday 2026-11-27)
+## For the demo (Friday 2026-11-27)
 
 1. `demo_display.py replay --port COM5` takes about 7.5 minutes for the whole night. Use `--max-epochs 300`
    (~2.5 h of night, about 2 minutes) for a shorter run. If the board misbehaves, use `--port none`.

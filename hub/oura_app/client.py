@@ -2,7 +2,8 @@
 import time
 
 from . import auth
-from .config import (API_BASE, MAX_429_RETRIES, MAX_RETRY_AFTER_S, REFRESH_MARGIN_S, SANDBOX_BASE, USER_AGENT,
+from .tokens import TokenLock
+from .config import (API_BASE, DATA_DIR, MAX_429_RETRIES, MAX_RETRY_AFTER_S, REFRESH_MARGIN_S, SANDBOX_BASE, USER_AGENT,
                      Settings)
 
 
@@ -15,22 +16,37 @@ class NoAccess(OuraError):
 
 
 class OuraClient:
-    def __init__(self, settings: Settings, store, http=None, sandbox: bool = False, sleep=time.sleep, now=time.time):
+    def __init__(self, settings: Settings, store, http=None, sandbox: bool = False, sleep=time.sleep, now=time.time,
+                 lock_path=None):
         if http is None:
             import requests
             http = requests.Session()
         self.s, self.store, self.http, self.sleep, self.now = settings, store, http, sleep, now
         self.base = SANDBOX_BASE if sandbox else API_BASE
         self._fresh = False             # True once this client has refreshed the token itself
+        self.lock_path = lock_path or DATA_DIR / ".token.lock"
 
     def _token(self, force_refresh: bool = False):
         tok = self.store.load()
         if tok is None:
             raise auth.AuthError("not signed in: run `python -m hub.oura_app login` first")
-        if force_refresh or tok.expires_at - self.now() < REFRESH_MARGIN_S:
-            tok = auth.refresh(self.http, self.s, tok, self.store, now=self.now())
+        if not force_refresh and tok.expires_at - self.now() >= REFRESH_MARGIN_S:
+            return tok
+        with TokenLock(self.lock_path):
+            cur = self.store.load() or tok
+            if cur.refresh_token != tok.refresh_token and cur.expires_at - self.now() >= REFRESH_MARGIN_S:
+                self._fresh = True      # another run refreshed while we waited: use its token
+                return cur
+            try:
+                new = auth.refresh(self.http, self.s, cur, self.store, now=self.now())
+            except auth.AuthError as e:
+                again = self.store.load()
+                if e.code == "invalid_grant" and again and again.refresh_token != cur.refresh_token:
+                    self._fresh = True  # spent by a run that didn't hold the lock; its new token is saved
+                    return again
+                raise
             self._fresh = True
-        return tok
+            return new
 
     def _request(self, path: str, params: dict) -> dict:
         tok, refreshed, waits = self._token(), False, 0

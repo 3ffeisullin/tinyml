@@ -42,6 +42,13 @@ class FakeHTTP:
         return self._next("POST", url, **kw)
 
 
+@pytest.fixture(autouse=True)
+def _lock_in_tmp(tmp_path, monkeypatch):
+    """Keep the refresh lock file out of the repo's data/ during tests."""
+    import hub.oura_app.client as client_mod
+    monkeypatch.setattr(client_mod, "DATA_DIR", tmp_path)
+
+
 def token(expires_at=NOW + 3600):
     return Token("acc-old", "ref-old", expires_at)
 
@@ -245,13 +252,13 @@ def test_pull_window_repulls_three_days_and_upserts(tmp_path):
     deleted = {**NIGHT, "id": "gone", "type": "deleted"}
     fc = FakeClient([NIGHT, deleted])
     r1 = pull(fc, store, today=date(2026, 11, 22), days=3)
-    assert r1["sleep"] == {"new": 1, "updated": 0, "unchanged": 0}           # deleted periods skipped
+    assert r1["sleep"] == {"new": 1, "updated": 0, "unchanged": 0, "removed": 0}           # deleted periods skipped
     assert fc.hr_calls == [("2026-11-19T00:00:00Z", "2026-11-23T00:00:00Z")]
     assert "vO2_max" not in fc.asked and "daily_readiness" in fc.asked          # only granted scopes
     assert r1["daily_resilience"] == {"error": "no access (scope not granted)"}  # reported, not fatal
     assert r1["daily_readiness"]["new"] == 1
     r2 = pull(FakeClient([NIGHT]), store, today=date(2026, 11, 22))
-    assert r2["sleep"] == {"new": 0, "updated": 0, "unchanged": 1} and r2["heartrate"]["unchanged"] == 1
+    assert r2["sleep"] == {"new": 0, "updated": 0, "unchanged": 1, "removed": 0} and r2["heartrate"]["unchanged"] == 1
     late = {**NIGHT, "deep_sleep_duration": 5400}                            # ring synced more data later
     assert pull(FakeClient([late]), store, today=date(2026, 11, 22))["sleep"]["updated"] == 1
     assert len(store.sleep()) == 1 and store.sleep()[0]["deep_sleep_duration"] == 5400
@@ -278,3 +285,169 @@ def test_day_view_collects_everything_for_a_day(tmp_path):
     assert [b for _, b in v["hr_samples"]] == [50]                      # only samples inside the night
     assert [x for _, x in series(night, "hrv")] == [40.0, 50.0]          # gaps dropped
     assert day_view(LocalStore(tmp_path / "empty"))["day"] is None
+
+
+# --- review fixes (PR #6 review, 2026-11-23) ----------------------------------------------------
+class RacingStore(MemoryStore):
+    """Simulates another run (the scheduled pull) refreshing between our load and our refresh."""
+
+    def __init__(self, tok, other):
+        super().__init__(tok)
+        self.other, self.loads = other, 0
+
+    def load(self):
+        self.loads += 1
+        if self.loads == 3:                       # after our refresh attempt failed, the other run's token is there
+            self.token = self.other
+        return self.token
+
+
+def test_invalid_grant_after_another_run_refreshed_reloads_and_retries(tmp_path):
+    theirs = Token("acc-theirs", "ref-theirs", NOW + 86400)
+    store = RacingStore(token(expires_at=NOW + 60), theirs)
+    http = FakeHTTP(Resp(400, {"error": "invalid_grant"}), Resp(200, {"data": [{"id": "x"}]}))
+    c = OuraClient(S, store, http, now=lambda: NOW, lock_path=tmp_path / "lock")
+    assert c.collection("sleep") == [{"id": "x"}]
+    assert http.calls[1][2]["headers"]["Authorization"] == "Bearer acc-theirs"
+    assert not (tmp_path / "lock").exists()                      # lock released
+
+
+def test_invalid_grant_with_unchanged_token_still_fails(tmp_path):
+    http = FakeHTTP(Resp(400, {"error": "invalid_grant"}))
+    c = OuraClient(S, MemoryStore(token(expires_at=NOW + 60)), http, now=lambda: NOW, lock_path=tmp_path / "lock")
+    with pytest.raises(auth.AuthError) as e:
+        c.collection("sleep")
+    assert e.value.code == "invalid_grant" and not (tmp_path / "lock").exists()
+
+
+def test_token_refreshed_by_another_run_while_waiting_is_used_without_refreshing(tmp_path):
+    class Swapped(MemoryStore):                                   # first load: our old token; then theirs
+        def __init__(self):
+            super().__init__(token(expires_at=NOW + 60))
+            self.n = 0
+
+        def load(self):
+            self.n += 1
+            return self.token if self.n == 1 else Token("acc-theirs", "ref-theirs", NOW + 86400)
+
+    http = FakeHTTP(Resp(200, {"data": []}))
+    OuraClient(S, Swapped(), http, now=lambda: NOW, lock_path=tmp_path / "lock").collection("sleep")
+    assert len(http.calls) == 1 and http.calls[0][2]["headers"]["Authorization"] == "Bearer acc-theirs"
+
+
+def test_token_lock_waits_and_takes_over_a_stale_one(tmp_path):
+    import os
+    from hub.oura_app.tokens import TokenLock
+    p = tmp_path / "lock"
+    p.write_text("123")
+    clock = [1000.0]
+    os.utime(p, (clock[0], clock[0]))
+    waited = []
+
+    def sleep(sec):
+        waited.append(sec)
+        clock[0] += 50
+
+    with TokenLock(p, timeout_s=300, stale_s=120, sleep=sleep, clock=lambda: clock[0]):
+        assert p.exists()
+    assert waited and not p.exists()                              # waited, then took over the stale lock
+    p.write_text("123")
+    os.utime(p, (clock[0], clock[0]))
+    with pytest.raises(TimeoutError):
+        with TokenLock(p, timeout_s=1, stale_s=1e9, sleep=sleep, clock=lambda: clock[0]):
+            pass
+
+
+def test_repull_removes_records_oura_no_longer_returns(tmp_path):
+    class FakeClient:
+        s = Settings("i", "s", "http://localhost:8080/callback", "daily")
+
+        def __init__(self, sleeps, dailies):
+            self.sleeps, self.dailies = sleeps, dailies
+
+        def collection(self, name, **p):
+            return self.sleeps if name == "sleep" else self.dailies if name == "daily_sleep" else []
+
+    store = LocalStore(tmp_path)
+    old_night = {**NIGHT, "id": "old", "day": "2026-11-01"}                # outside the re-pulled window: kept
+    first = {**NIGHT, "id": "v1"}
+    pull(FakeClient([old_night, first], [{"id": "d1", "day": "2026-11-21"}]), store, today=date(2026, 11, 22),
+         days=30, names=["sleep", "daily_sleep"])
+    reissued = {**NIGHT, "id": "v2"}                                        # Oura re-issued the night, new id
+    r = pull(FakeClient([reissued], [{"id": "d2", "day": "2026-11-21"}]), store, today=date(2026, 11, 22),
+             names=["sleep", "daily_sleep"])
+    assert r["sleep"]["removed"] == 1 and r["daily_sleep"]["removed"] == 1
+    assert sorted(x["id"] for x in store.sleep()) == ["old", "v2"]
+
+
+def test_failed_fetch_removes_nothing(tmp_path):
+    class Broken:
+        s = Settings("i", "s", "http://localhost:8080/callback", "daily")
+
+        def collection(self, name, **p):
+            raise OuraError("HTTP 500")
+
+    store = LocalStore(tmp_path)
+    store.upsert("sleep", {"keep": {**NIGHT, "id": "keep"}})
+    assert "error" in pull(Broken(), store, today=date(2026, 11, 22), names=["sleep"])["sleep"]
+    assert [x["id"] for x in store.sleep()] == ["keep"]
+
+
+def test_revoke_reports_the_real_outcome_without_the_token():
+    tok = Token("acc-SECRET", "ref-SECRET", NOW)
+    http = FakeHTTP(Resp(200))
+    assert auth.revoke(http, tok) == "revoked at Oura" and http.calls[0][0] == "GET"
+    http = FakeHTTP(Resp(405), Resp(200))
+    assert auth.revoke(http, tok) == "revoked at Oura" and [c[0] for c in http.calls] == ["GET", "POST"]
+    out = auth.revoke(FakeHTTP(Resp(401)), tok)
+    assert "401" in out and "may still be active" in out and "SECRET" not in out
+
+    class Down:
+        def get(self, url, **kw):
+            raise ConnectionError(f"failed: {url}?access_token={kw['params']['access_token']}")
+
+    out = auth.revoke(Down(), tok)
+    assert "could not reach Oura" in out and "SECRET" not in out
+
+
+def test_callback_page_escapes_text():
+    import threading
+    import time as _t
+    import urllib.request
+    s = Settings("i", "s", "http://127.0.0.1:8765/callback", "daily")
+    errors = []
+
+    def serve():
+        try:
+            auth.wait_for_callback(s, "good", 10)
+        except auth.AuthError as e:
+            errors.append(e)
+
+    th = threading.Thread(target=serve, daemon=True)
+    th.start()
+    page = ""
+    for _ in range(50):
+        try:
+            page = urllib.request.urlopen(
+                "http://127.0.0.1:8765/callback?state=good&error=%3Cscript%3Ex%3C/script%3E", timeout=2).read().decode()
+            break
+        except OSError:
+            _t.sleep(0.1)
+    th.join(5)
+    assert errors and "<script>" not in page and "&lt;script&gt;" in page
+
+
+def test_missing_expires_in_defaults_to_an_hour():
+    t = Token.from_response({"access_token": "a", "refresh_token": "r"}, NOW)
+    assert t.expires_at == NOW + 3600
+
+
+def test_live_screenshots_only_under_data(tmp_path):
+    import sys
+    from pathlib import Path
+    sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "scripts"))
+    import demo_display as dd
+    assert not dd.live_save_allowed(dd.REPO / "reports" / "oura_live.png")
+    assert not dd.live_save_allowed(dd.REPO / "screen.png")
+    assert dd.live_save_allowed(dd.REPO / "data" / "oura" / "screen.png")
+    assert dd.live_save_allowed(tmp_path / "screen.png")                       # outside the repo: user's choice
