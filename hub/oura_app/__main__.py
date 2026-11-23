@@ -3,6 +3,7 @@
     .\\venv\\Scripts\\python.exe -m hub.oura_app login            # once: browser sign-in, tokens to Credential Manager
     .\\venv\\Scripts\\python.exe -m hub.oura_app pull --days 30   # first time; nightly runs use the default 3 days
     .\\venv\\Scripts\\python.exe -m hub.oura_app nights           # table of stored nights
+    .\\venv\\Scripts\\python.exe -m hub.oura_app day [--day D]    # everything Oura has for one day
     .\\venv\\Scripts\\python.exe -m hub.oura_app status           # signed in? token expiry? stored nights?
     .\\venv\\Scripts\\python.exe -m hub.oura_app check            # does Oura accept the client ID/secret in .env?
     .\\venv\\Scripts\\python.exe -m hub.oura_app logout           # revoke and delete the tokens
@@ -16,7 +17,8 @@ from datetime import datetime, timezone
 from . import auth
 from .client import OuraClient
 from .config import DATA_DIR, REPULL_DAYS, REVOKE_URL, TOKEN_URL, USER_AGENT, ConfigError, load_settings
-from .data import LocalStore, night_summary
+from .data import LocalStore, day_view, night_summary
+from .report import print_day
 from .pull import pull
 from .tokens import KeyringStore
 
@@ -43,6 +45,7 @@ def main(argv=None):
     pl = sub.add_parser("pull"); pl.add_argument("--days", type=int, default=REPULL_DAYS)
     pl.add_argument("--no-heartrate", action="store_true")
     nt = sub.add_parser("nights"); nt.add_argument("--all", action="store_true", help="include naps and rests")
+    dy = sub.add_parser("day", help="everything stored for one day"); dy.add_argument("--day", help="YYYY-MM-DD")
     sub.add_parser("status"); sub.add_parser("logout"); sub.add_parser("check", help="test the client ID/secret")
     a = ap.parse_args(argv)
 
@@ -52,6 +55,9 @@ def main(argv=None):
         if a.cmd == "nights":
             rows = [night_summary(r) for r in local.sleep() if a.all or r.get("type") == "long_sleep"]
             print_nights(rows) if rows else print("No nights stored yet: run `pull` first.")
+            return 0
+        if a.cmd == "day":
+            print_day(day_view(local, a.day))
             return 0
         if a.cmd == "status":
             tok = store.load()
@@ -87,9 +93,11 @@ def main(argv=None):
             res = pull(OuraClient(s, store, http, sandbox=a.sandbox), local, days=a.days, heartrate=not a.no_heartrate)
             print(f"Pulled {res['window'][0]} to {res['window'][1]} ({'sandbox' if a.sandbox else 'live'}) "
                   f"at {datetime.now(timezone.utc):%Y-%m-%d %H:%M} UTC")
-            for k in ("sleep", "daily_sleep", "heartrate"):
-                if k in res:
-                    print(f"  {k}: {res[k]['new']} new, {res[k]['updated']} updated, {res[k]['unchanged']} unchanged")
+            for k, c in res.items():
+                if k == "window":
+                    continue
+                print(f"  {k:25s} " + (c["error"] if "error" in c else
+                                         f"{c['new']} new, {c['updated']} updated, {c['unchanged']} unchanged"))
         elif a.cmd == "logout":
             tok = store.load()
             if tok:

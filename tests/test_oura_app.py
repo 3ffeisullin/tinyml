@@ -7,10 +7,10 @@ from urllib.parse import parse_qs, urlparse
 import pytest
 
 from hub.oura_app import auth
-from hub.oura_app.client import OuraClient, OuraError
+from hub.oura_app.client import NoAccess, OuraClient, OuraError
 from hub.oura_app.config import (API_BASE, SANDBOX_BASE, TOKEN_URL, ConfigError, Settings, load_settings, parse_env)
-from hub.oura_app.data import LocalStore, hypnogram, night_summary, normalise_sleep, to_utc
-from hub.oura_app.pull import pull, window
+from hub.oura_app.data import LocalStore, day_view, hypnogram, night_summary, normalise_sleep, series, to_utc
+from hub.oura_app.pull import pull, wanted, window
 from hub.oura_app.tokens import KeyringStore, MemoryStore, Token
 
 S = Settings("client-id-123", "s3cret-value", "http://localhost:8080/callback", "daily heartrate")
@@ -146,9 +146,20 @@ def test_401_refreshes_once_and_retries():
     assert http.calls[2][2]["headers"]["Authorization"] == "Bearer acc-new"
 
 
-def test_second_401_asks_to_sign_in_again():
+def test_second_401_is_reported_as_no_access_and_not_refreshed_again():
     http = FakeHTTP(Resp(401), Resp(200, TOKEN_BODY), Resp(401))
-    with pytest.raises(auth.AuthError, match="sign in again"):
+    c = OuraClient(S, MemoryStore(token()), http, now=lambda: NOW)
+    with pytest.raises(NoAccess, match="scope"):
+        c.collection("vO2_max")
+    c.http = FakeHTTP(Resp(401))                            # token already refreshed in this run: no 2nd refresh
+    with pytest.raises(NoAccess):
+        c.collection("daily_spo2")
+    assert len(c.http.calls) == 1
+
+
+def test_failed_refresh_still_asks_to_sign_in_again():
+    http = FakeHTTP(Resp(401), Resp(400, {"error": "invalid_grant"}))
+    with pytest.raises(auth.AuthError):
         OuraClient(S, MemoryStore(token()), http, now=lambda: NOW).collection("sleep")
 
 
@@ -214,18 +225,21 @@ def test_pull_window_repulls_three_days_and_upserts(tmp_path):
     assert window(date(2026, 11, 22), 30)[0] == date(2026, 10, 23)
 
     class FakeClient:
+        s = S                                                    # scopes: daily heartrate
+
         def __init__(self, nights):
-            self.nights, self.hr_calls = nights, []
+            self.nights, self.hr_calls, self.asked = nights, [], []
 
-        def sleep_periods(self, s, e):
-            return self.nights
-
-        def daily_sleep(self, s, e):
-            return [{"id": "d1", "day": "2026-11-21", "score": 80}]
-
-        def heartrate(self, s, e):
-            self.hr_calls.append((s, e))
-            return [{"timestamp": "2026-11-21T05:10:00+00:00", "bpm": 55, "source": "sleep"}]
+        def collection(self, name, **p):
+            self.asked.append(name)
+            if name == "sleep":
+                return self.nights
+            if name == "heartrate":
+                self.hr_calls.append((p["start_datetime"], p["end_datetime"]))
+                return [{"timestamp": "2026-11-21T05:10:00+00:00", "bpm": 55, "source": "sleep"}]
+            if name == "daily_resilience":
+                raise NoAccess("daily_resilience: not covered")
+            return [{"id": f"{name}-1", "day": "2026-11-21", "score": 80}]
 
     store = LocalStore(tmp_path)
     deleted = {**NIGHT, "id": "gone", "type": "deleted"}
@@ -233,8 +247,34 @@ def test_pull_window_repulls_three_days_and_upserts(tmp_path):
     r1 = pull(fc, store, today=date(2026, 11, 22), days=3)
     assert r1["sleep"] == {"new": 1, "updated": 0, "unchanged": 0}           # deleted periods skipped
     assert fc.hr_calls == [("2026-11-19T00:00:00Z", "2026-11-23T00:00:00Z")]
+    assert "vO2_max" not in fc.asked and "daily_readiness" in fc.asked          # only granted scopes
+    assert r1["daily_resilience"] == {"error": "no access (scope not granted)"}  # reported, not fatal
+    assert r1["daily_readiness"]["new"] == 1
     r2 = pull(FakeClient([NIGHT]), store, today=date(2026, 11, 22))
     assert r2["sleep"] == {"new": 0, "updated": 0, "unchanged": 1} and r2["heartrate"]["unchanged"] == 1
     late = {**NIGHT, "deep_sleep_duration": 5400}                            # ring synced more data later
     assert pull(FakeClient([late]), store, today=date(2026, 11, 22))["sleep"]["updated"] == 1
     assert len(store.sleep()) == 1 and store.sleep()[0]["deep_sleep_duration"] == 5400
+
+
+def test_wanted_follows_scopes():
+    assert "vO2_max" in wanted("daily heartrate heart_health") and "vO2_max" not in wanted("daily heartrate")
+    assert "heartrate" not in wanted("daily heartrate", heartrate=False)
+    assert not {"personal_info", "email"} & set(wanted("daily heartrate heart_health spo2 workout session tag"))
+
+
+def test_day_view_collects_everything_for_a_day(tmp_path):
+    store = LocalStore(tmp_path)
+    night = normalise_sleep({**NIGHT, "hrv": {"interval": 300, "items": [40, None, 50],
+                                              "timestamp": "2026-11-20T23:10:00-06:00"}})
+    store.upsert("sleep", {"n1": night, "nap": {**night, "id": "nap", "type": "late_nap"}})
+    store.upsert("daily_readiness", {"r": {"id": "r", "day": "2026-11-21", "score": 77, "timestamp": "t"}})
+    store.upsert("vO2_max", {"v": {"id": "v", "day": "2026-11-21", "vo2_max": 41}})
+    store.upsert("heartrate", {"2026-11-21T06:00:00Z": {"bpm": 50}, "2026-11-22T06:00:00Z": {"bpm": 70}})
+    v = day_view(store)
+    assert v["day"] == "2026-11-21" and v["days"] == ["2026-11-21"]
+    assert v["summary"]["deep_min"] == 80.0 and len(v["hypnogram"]) == 4
+    assert v["daily_readiness"]["score"] == 77 and v["vO2_max"]["vo2_max"] == 41 and v["daily_spo2"] is None
+    assert [b for _, b in v["hr_samples"]] == [50]                      # only samples inside the night
+    assert [x for _, x in series(night, "hrv")] == [40.0, 50.0]          # gaps dropped
+    assert day_view(LocalStore(tmp_path / "empty"))["day"] is None

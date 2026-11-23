@@ -1,11 +1,15 @@
 """Pull recent Oura data into the local store (REQ-OURA-04/05).
 
 Each run covers the last `days` days (at least REPULL_DAYS = 3, to catch late ring syncs) and
-upserts, so running it nightly, or twice, never duplicates a night.
+upserts, so running it nightly, or twice, never duplicates a record. Every collection in
+config.COLLECTIONS whose scope was granted is pulled; one the sign-in doesn't cover is reported
+as "no access" and the rest still go through.
 """
 from datetime import date, datetime, time, timedelta, timezone
 
-from .config import REPULL_DAYS
+from .auth import AuthError
+from .client import NoAccess, OuraError
+from .config import COLLECTIONS, REPULL_DAYS
 from .data import iso_utc, normalise_sleep, to_utc
 
 HR_CHUNK_DAYS = 7
@@ -16,20 +20,44 @@ def window(today: date, days: int) -> tuple[date, date]:
     return today - timedelta(days=days), today + timedelta(days=1)
 
 
-def pull(client, store, today: date | None = None, days: int = REPULL_DAYS, heartrate: bool = True) -> dict:
-    today = today or datetime.now(timezone.utc).date()
-    start, end = window(today, days)
-    s, e = start.isoformat(), end.isoformat()
-    sleep = {r["id"]: normalise_sleep(r) for r in client.sleep_periods(s, e) if r.get("type") != "deleted"}
-    daily = {r["id"]: r for r in client.daily_sleep(s, e)}
-    out = {"window": [s, e], "sleep": store.upsert("sleep", sleep), "daily_sleep": store.upsert("daily_sleep", daily)}
-    if heartrate:
+def wanted(scopes: str, heartrate: bool = True) -> list[str]:
+    granted = set(scopes.split())
+    return [n for n, (scope, _) in COLLECTIONS.items() if scope in granted and (heartrate or n != "heartrate")]
+
+
+def _key(rec: dict) -> str:
+    return rec.get("id") or rec.get("day") or rec.get("timestamp")
+
+
+def _fetch(client, name: str, start: date, end: date) -> dict:
+    if name == "heartrate":
         hr, t = {}, datetime.combine(start, time(), timezone.utc)
         stop = datetime.combine(end, time(), timezone.utc)
         while t < stop:
             t2 = min(t + timedelta(days=HR_CHUNK_DAYS), stop)
-            for row in client.heartrate(iso_utc(t), iso_utc(t2)):
+            for row in client.collection("heartrate", start_datetime=iso_utc(t), end_datetime=iso_utc(t2)):
                 hr[iso_utc(to_utc(row["timestamp"]))] = {"bpm": row["bpm"], "source": row.get("source")}
             t = t2
-        out["heartrate"] = store.upsert("heartrate", hr)
+        return hr
+    rows = client.collection(name, start_date=start.isoformat(), end_date=end.isoformat())
+    if name == "sleep":
+        return {r["id"]: normalise_sleep(r) for r in rows if r.get("type") != "deleted"}
+    return {_key(r): r for r in rows}
+
+
+def pull(client, store, today: date | None = None, days: int = REPULL_DAYS, heartrate: bool = True,
+         names: list[str] | None = None) -> dict:
+    """Returns {"window": [start, end], <collection>: {new, updated, unchanged} or {"error": msg}}."""
+    today = today or datetime.now(timezone.utc).date()
+    start, end = window(today, days)
+    out = {"window": [start.isoformat(), end.isoformat()]}
+    for name in names or wanted(client.s.scopes, heartrate):
+        try:
+            out[name] = store.upsert(name, _fetch(client, name, start, end))
+        except NoAccess:
+            out[name] = {"error": "no access (scope not granted)"}
+        except OuraError as e:
+            out[name] = {"error": str(e)}
+        except AuthError:
+            raise                                   # sign-in itself is broken: stop, don't report per collection
     return out

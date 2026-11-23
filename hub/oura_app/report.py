@@ -1,0 +1,65 @@
+"""Plain-text report of everything Oura has for one day (used by `day` and the demo display)."""
+
+
+def _get(d, *path):
+    for k in path:
+        d = d.get(k) if isinstance(d, dict) else None
+    return d
+
+
+def _min(sec):
+    return None if sec is None else round(sec / 60, 1)
+
+
+def day_lines(v) -> list[tuple[str, str]]:
+    """(label, value) rows for everything in a day_view; missing values are skipped."""
+    s, n, rows = v["summary"] or {}, v["night"] or {}, []
+
+    def add(label, val, unit=""):
+        if val is not None and val != "":
+            rows.append((label, f"{val}{unit}"))
+
+    if s:
+        add("Bed → up (local)", f"{s['start_local']} → {s['end_local']}")
+        add("In bed", s["in_bed_min"], " min")
+        add("Asleep", s["sleep_min"], " min")
+        add("Deep", f"{s['deep_min']} min ({s['deep_pct']} % of sleep)")
+        add("Light", s["light_min"], " min")
+        add("REM", s["rem_min"], " min")
+        add("Awake", s["awake_min"], " min")
+    add("Sleep efficiency", n.get("efficiency"), " %")
+    add("Time to fall asleep", _min(n.get("latency")), " min")
+    add("Average heart rate", n.get("average_heart_rate") and round(n["average_heart_rate"]), " bpm")
+    add("Lowest heart rate", n.get("lowest_heart_rate"), " bpm")
+    add("Average HRV", n.get("average_hrv"), " ms")
+    add("Breathing rate", n.get("average_breath"), " /min")
+    add("Restless periods", n.get("restless_periods"))
+    add("Sleep score", _get(v, "daily_sleep", "score"))
+    for k, x in (_get(v, "daily_sleep", "contributors") or {}).items():
+        add(f"  sleep: {k.replace('_', ' ')}", x)
+    add("Readiness score", _get(v, "daily_readiness", "score"))
+    add("Temperature deviation", _get(v, "daily_readiness", "temperature_deviation"), " °C")
+    for k, x in (_get(v, "daily_readiness", "contributors") or {}).items():
+        add(f"  readiness: {k.replace('_', ' ')}", x)
+    add("Activity score", _get(v, "daily_activity", "score"))
+    add("Steps", _get(v, "daily_activity", "steps"))
+    add("Active calories", _get(v, "daily_activity", "active_calories"), " kcal")
+    add("Total calories", _get(v, "daily_activity", "total_calories"), " kcal")
+    add("Stress (day summary)", _get(v, "daily_stress", "day_summary"))
+    add("High stress", _min(_get(v, "daily_stress", "stress_high")), " min")
+    add("High recovery", _min(_get(v, "daily_stress", "recovery_high")), " min")
+    add("Resilience", _get(v, "daily_resilience", "level"))
+    add("SpO2 average", _get(v, "daily_spo2", "spo2_percentage", "average"), " %")
+    add("Cardiovascular age", _get(v, "daily_cardiovascular_age", "vascular_age"), " years")
+    add("VO2 max", _get(v, "vO2_max", "vo2_max"), " ml/kg/min")
+    add("Heart-rate samples in the night", len(v["hr_samples"]) or None)
+    return rows
+
+
+def print_day(v):
+    if not v["day"]:
+        print("No nights stored yet: run `pull` first.")
+        return
+    print(f"Oura, day {v['day']}  (stored days: {', '.join(v['days'])})")
+    for label, val in day_lines(v):
+        print(f"  {label:34s} {val}")

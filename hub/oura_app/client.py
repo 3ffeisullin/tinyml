@@ -10,6 +10,10 @@ class OuraError(RuntimeError):
     pass
 
 
+class NoAccess(OuraError):
+    """The token works but doesn't cover this collection (scope not granted, or not on this account)."""
+
+
 class OuraClient:
     def __init__(self, settings: Settings, store, http=None, sandbox: bool = False, sleep=time.sleep, now=time.time):
         if http is None:
@@ -17,6 +21,7 @@ class OuraClient:
             http = requests.Session()
         self.s, self.store, self.http, self.sleep, self.now = settings, store, http, sleep, now
         self.base = SANDBOX_BASE if sandbox else API_BASE
+        self._fresh = False             # True once this client has refreshed the token itself
 
     def _token(self, force_refresh: bool = False):
         tok = self.store.load()
@@ -24,6 +29,7 @@ class OuraClient:
             raise auth.AuthError("not signed in: run `python -m hub.oura_app login` first")
         if force_refresh or tok.expires_at - self.now() < REFRESH_MARGIN_S:
             tok = auth.refresh(self.http, self.s, tok, self.store, now=self.now())
+            self._fresh = True
         return tok
 
     def _request(self, path: str, params: dict) -> dict:
@@ -33,9 +39,12 @@ class OuraClient:
                               headers={"Authorization": f"Bearer {tok.access_token}", "User-Agent": USER_AGENT})
             if r.status_code == 200:
                 return r.json()
-            if r.status_code == 401 and not refreshed:        # expired or revoked: refresh once, retry once
+            if r.status_code == 401 and not refreshed and not self._fresh:   # expired: refresh once, retry once
                 tok, refreshed = self._token(force_refresh=True), True
                 continue
+            if r.status_code == 401 and self._fresh and not refreshed:
+                # The token was refreshed earlier in this run and works elsewhere: a scope problem.
+                raise NoAccess(f"{path}: not covered by this sign-in (scope not granted)")
             if r.status_code == 429 and waits < MAX_429_RETRIES:
                 try:
                     wait = float(r.headers.get("Retry-After", 60))
@@ -45,7 +54,8 @@ class OuraClient:
                 self.sleep(min(max(wait, 1.0), MAX_RETRY_AFTER_S))
                 continue
             if r.status_code == 401:
-                raise auth.AuthError("Oura rejected the token after a refresh: sign in again")
+                # A brand-new token rejected: either the sign-in was revoked or the scope is missing.
+                raise NoAccess(f"{path}: rejected even with a fresh token (scope not granted, or sign in again)")
             if r.status_code == 403:
                 raise OuraError(f"{path}: HTTP 403 (missing scope, or the Oura membership has expired)")
             raise OuraError(f"{path}: HTTP {r.status_code}")

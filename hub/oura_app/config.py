@@ -19,6 +19,29 @@ REFRESH_MARGIN_S = 300          # refresh the access token when it has less than
 MAX_RETRY_AFTER_S = 900         # never wait longer than 15 min on a 429
 MAX_429_RETRIES = 3
 
+# Every Oura collection the app knows, with the OAuth scope it needs and how it is queried
+# ("date" = start_date/end_date, "datetime" = start_datetime/end_datetime). `pull` fetches the ones
+# whose scope is in OURA_SCOPES; a collection the sign-in doesn't cover is reported, not fatal.
+# Email and personal info are deliberately absent (privacy; not needed).
+COLLECTIONS = {
+    "sleep": ("daily", "date"),                     # sleep periods: hypnograms, HR/HRV series, durations
+    "daily_sleep": ("daily", "date"),               # sleep score + contributors
+    "daily_readiness": ("daily", "date"),           # readiness score, temperature deviation
+    "daily_activity": ("daily", "date"),            # activity score, steps, calories, MET
+    "daily_stress": ("daily", "date"),              # stress / recovery minutes
+    "daily_resilience": ("daily", "date"),          # resilience level
+    "sleep_time": ("daily", "date"),                # recommended bedtime
+    "rest_mode_period": ("daily", "date"),
+    "daily_cardiovascular_age": ("heart_health", "date"),
+    "vO2_max": ("heart_health", "date"),
+    "daily_spo2": ("spo2", "date"),
+    "workout": ("workout", "date"),
+    "session": ("session", "date"),
+    "tag": ("tag", "date"),
+    "enhanced_tag": ("tag", "date"),
+    "heartrate": ("heartrate", "datetime"),         # 5-min (day) / per-beat-window (sleep) samples
+}
+
 
 class ConfigError(RuntimeError):
     pass
@@ -29,7 +52,7 @@ class Settings:
     client_id: str
     client_secret: str = field(repr=False)
     redirect_uri: str = "http://localhost:8080/callback"
-    scopes: str = "daily heartrate"
+    scopes: str = "daily heartrate heart_health"
 
     def __repr__(self):  # never show the secret, even in tracebacks
         return f"Settings(client_id={self.client_id[:4]}…, redirect_uri={self.redirect_uri!r}, scopes={self.scopes!r})"

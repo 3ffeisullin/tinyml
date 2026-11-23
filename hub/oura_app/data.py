@@ -69,6 +69,9 @@ class LocalStore:
     def __init__(self, root: Path):
         self.root = Path(root)
 
+    def load(self, name: str) -> dict:
+        return self._load(name)
+
     def _load(self, name):
         f = self.root / f"{name}.json"
         return json.loads(f.read_text(encoding="utf-8")) if f.exists() else {}
@@ -96,3 +99,46 @@ class LocalStore:
 
     def heartrate(self) -> dict:
         return self._load("heartrate")
+
+
+def series(rec: dict, key: str) -> list[tuple[datetime, float]]:
+    """A sleep period's 5-min series ('heart_rate' or 'hrv') as [(UTC time, value)], gaps dropped."""
+    s = rec.get(key) or {}
+    if not s.get("items"):
+        return []
+    t0, step = to_utc(s["timestamp"]), float(s.get("interval", 300))
+    return [(t0 + timedelta(seconds=i * step), float(v)) for i, v in enumerate(s["items"]) if v is not None]
+
+
+def _by_day(store: LocalStore, name: str, day: str):
+    rows = [r for r in store.load(name).values() if r.get("day") == day]
+    return max(rows, key=lambda r: r.get("timestamp") or "", default=None)
+
+
+def days_available(store: LocalStore) -> list[str]:
+    return sorted({r["day"] for r in store.sleep() if r.get("type") == "long_sleep" and r.get("day")})
+
+
+def day_view(store: LocalStore, day: str | None = None) -> dict:
+    """Everything stored for one Oura day (the night that ends on it, plus that day's summaries).
+
+    Missing collections come back as None, so a display can show what exists."""
+    days = days_available(store)
+    day = day or (days[-1] if days else None)
+    nights = [r for r in store.sleep() if r.get("day") == day and r.get("type") == "long_sleep"]
+    night = max(nights, key=lambda r: r.get("total_sleep_duration") or 0, default=None)
+    hr = {}
+    if night:
+        a, b = to_utc(night["bedtime_start"]), to_utc(night["bedtime_end"])
+        hr = {k: v for k, v in store.heartrate().items() if a <= to_utc(k) <= b}
+    v = {"day": day, "days": days, "night": night,
+         "summary": night_summary(night) if night else None,
+         "hypnogram": hypnogram(night) if night and night.get("sleep_phase_30_sec") else
+                      hypnogram(night, 300) if night else [],
+         "hr": series(night, "heart_rate") if night else [], "hrv": series(night, "hrv") if night else [],
+         "hr_samples": sorted((to_utc(k), x["bpm"]) for k, x in hr.items()),
+         "trend": [night_summary(r) for r in store.sleep() if r.get("type") == "long_sleep"]}
+    for name in ("daily_sleep", "daily_readiness", "daily_activity", "daily_stress", "daily_resilience",
+                 "daily_spo2", "daily_cardiovascular_age", "vO2_max", "sleep_time"):
+        v[name] = _by_day(store, name, day) if day else None
+    return v
