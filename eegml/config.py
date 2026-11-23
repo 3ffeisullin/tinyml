@@ -44,3 +44,30 @@ class FilterSpec:
     lp_hz: float = 45.0
     lp_order: int = 4
     extra: dict = field(default_factory=dict)
+
+# REQ-FEAT-10, REQ-ML-03: sleep-model input. Each epoch's features are z-scored
+# with the session's calibration mean/SD, clipped, then the previous epochs are
+# appended: input = [t, t-1, ..., t-SLEEP_NEIGHBOURS].
+SLEEP_NEIGHBOURS = 2
+SLEEP_INPUT_CLIP = 6.0      # standardised units
+SLEEP_SD_FLOOR = 1e-6
+# REQ-FEAT-10 (changed 2026-11-21): running per-session standardisation. The
+# first SLEEP_WARMUP_EPOCHS epochs (5 min) are buffered and scored together with
+# their own mean/SD once the warm-up completes; after that each epoch updates the
+# running mean/SD (Welford, population SD) and is then standardised with it.
+SLEEP_STANDARDISE = "running"   # or "whole-night" (offline reference only)
+SLEEP_WARMUP_EPOCHS = 10
+
+# REQ-HW-02/03, REQ-ACQ-01/02: ADS1115 front end. Differential A0 (Pill OUT)
+# against the 1.65 V divider on A1 at +-2.048 V; fallback single-ended A0 at
+# +-4.096 V. 250 SPS continuous, paced by ALERT/RDY.
+ADC_I2C_ADDR = 0x48
+ADC_I2C_HZ = 400_000
+ADC_SPS = 250
+ADC_PGA_FS_V = 2.048
+ADC_FALLBACK_PGA_FS_V = 4.096
+# Pill gain (electrode uV -> Pill output uV). PLACEHOLDER: the vendor value was not
+# confirmed (2026-11-22); set it from the bench calibration with a known 10 Hz test
+# signal (REQ-ACQ-01). Staging is insensitive to it (running standardisation removes a
+# constant log-power offset); absolute uV readouts and clip thresholds are not.
+PILL_GAIN = 1000.0

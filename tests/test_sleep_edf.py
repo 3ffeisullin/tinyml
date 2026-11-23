@@ -37,3 +37,25 @@ def test_subject_features_separate_stages():
     d = ours[:, EPOCH_FEATURE_NAMES.index("rel_delta_mean")]
     a = ours[:, EPOCH_FEATURE_NAMES.index("rel_alpha_mean")]
     assert d[y == 3].mean() > d[y == 0].mean() and a[y == 0].mean() > a[y == 3].mean()
+
+
+def test_device_segment_is_what_the_device_records():
+    """Task 6b: 250 Hz segment from the first kept epoch; epochs on 30 s boundaries; gaps stay gaps."""
+    from eegml.config import EPOCH_S, FS
+    from eegml.sleep_edf import device_epoch_features, device_segment
+    x, fs, anns = synthetic_night()
+    # A movement-time epoch inside the N2 block: unscored, but still in the recorded signal.
+    anns = anns[:1] + [{"onset": 7200.0, "duration": 1800, "description": "Sleep stage 2"},
+                       {"onset": 9000.0, "duration": 30, "description": "Movement time"},
+                       {"onset": 9030.0, "duration": 1770, "description": "Sleep stage 2"}] + anns[2:]
+    seg, offsets, y, onsets = device_segment(x, fs, anns)
+    n = int(round(EPOCH_S * FS))
+    assert len(seg) % n == 0 and np.all(offsets % n == 0)
+    slots = len(seg) // n
+    assert len(y) == slots - 1  # the movement-time epoch is the only gap
+    feats = device_epoch_features(seg, np.arange(slots) * n, line_freq=50.0)
+    assert feats.shape == (slots, 30) and np.isfinite(feats).all()
+    # subject_features is built from the same two steps.
+    ours, _, y2 = subject_features(x, fs, anns)
+    np.testing.assert_array_equal(ours, feats[offsets // n])
+    np.testing.assert_array_equal(y, y2)

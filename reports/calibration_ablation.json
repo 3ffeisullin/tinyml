@@ -1,0 +1,79 @@
+{
+  "trained on whole night, tested on whole night": {
+    "accuracy": 0.7958402016871909,
+    "macro_f1": 0.7398193252039613,
+    "recall": {
+      "W": 0.829,
+      "N1": 0.515,
+      "N2": 0.811,
+      "N3": 0.828,
+      "REM": 0.795
+    }
+  },
+  "trained on whole night, tested on first 60 s": {
+    "accuracy": 0.5687966644041501,
+    "macro_f1": 0.44997234576263423,
+    "recall": {
+      "W": 0.196,
+      "N1": 0.299,
+      "N2": 0.834,
+      "N3": 0.528,
+      "REM": 0.383
+    }
+  },
+  "trained on whole night, tested on first 5 min": {
+    "accuracy": 0.5774265490158053,
+    "macro_f1": 0.46170797522536516,
+    "recall": {
+      "W": 0.196,
+      "N1": 0.268,
+      "N2": 0.827,
+      "N3": 0.521,
+      "REM": 0.463
+    }
+  },
+  "trained on whole night, tested on first 10 min": {
+    "accuracy": 0.5805294288761756,
+    "macro_f1": 0.44526817970691324,
+    "recall": {
+      "W": 0.158,
+      "N1": 0.164,
+      "N2": 0.846,
+      "N3": 0.586,
+      "REM": 0.453
+    }
+  },
+  "trained on whole night, tested on running": {
+    "accuracy": 0.7289828371957723,
+    "macro_f1": 0.6544855019886284,
+    "recall": {
+      "W": 0.534,
+      "N1": 0.384,
+      "N2": 0.821,
+      "N3": 0.734,
+      "REM": 0.794
+    }
+  },
+  "trained+tested on first 5 min": {
+    "accuracy": 0.6787549694560264,
+    "macro_f1": 0.601979020408634,
+    "recall": {
+      "W": 0.766,
+      "N1": 0.268,
+      "N2": 0.721,
+      "N3": 0.639,
+      "REM": 0.663
+    }
+  },
+  "trained+tested on running": {
+    "accuracy": 0.7702899253369534,
+    "macro_f1": 0.7104432126692971,
+    "recall": {
+      "W": 0.749,
+      "N1": 0.469,
+      "N2": 0.79,
+      "N3": 0.782,
+      "REM": 0.832
+    }
+  }
+}

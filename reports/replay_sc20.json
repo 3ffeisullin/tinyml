@@ -1,0 +1,127 @@
+{
+  "subject": 20,
+  "epochs": 1023,
+  "scored_epochs": 1022,
+  "hours": 8.53,
+  "in_training_set": false,
+  "parity": {
+    "windows_per_epoch": [
+      29
+    ],
+    "feature_max_rel_error": 7.523544236462084e-05,
+    "feature_p99_rel_error": 2.4878728512488753e-07,
+    "feature_worst": "kurtosis_mean",
+    "int8_outputs_identical": 0.978494623655914,
+    "int8_max_abs_diff": 8,
+    "stage_agreement": 1.0,
+    "stage_disagreements": 0
+  },
+  "board_vs_hypnogram": {
+    "accuracy": 0.6702544031311155,
+    "macro_f1": 0.466305275264685,
+    "recall": {
+      "W": 0.749,
+      "N1": 0.462,
+      "N2": 0.759,
+      "N3": 1.0,
+      "REM": 0.322
+    },
+    "confusion": [
+      [
+        197,
+        26,
+        8,
+        2,
+        30
+      ],
+      [
+        4,
+        18,
+        17,
+        0,
+        0
+      ],
+      [
+        41,
+        6,
+        409,
+        81,
+        2
+      ],
+      [
+        0,
+        0,
+        0,
+        4,
+        0
+      ],
+      [
+        80,
+        26,
+        11,
+        3,
+        57
+      ]
+    ]
+  },
+  "python_vs_hypnogram": {
+    "accuracy": 0.6702544031311155,
+    "macro_f1": 0.466305275264685,
+    "recall": {
+      "W": 0.749,
+      "N1": 0.462,
+      "N2": 0.759,
+      "N3": 1.0,
+      "REM": 0.322
+    },
+    "confusion": [
+      [
+        197,
+        26,
+        8,
+        2,
+        30
+      ],
+      [
+        4,
+        18,
+        17,
+        0,
+        0
+      ],
+      [
+        41,
+        6,
+        409,
+        81,
+        2
+      ],
+      [
+        0,
+        0,
+        0,
+        4,
+        0
+      ],
+      [
+        80,
+        26,
+        11,
+        3,
+        57
+      ]
+    ]
+  },
+  "class_counts": {
+    "W": 263,
+    "N1": 39,
+    "N2": 539,
+    "N3": 4,
+    "REM": 177
+  },
+  "board_us_per_epoch": {
+    "median": 280944.0,
+    "max": 286999.0
+  },
+  "wall_seconds": 428.2
+}

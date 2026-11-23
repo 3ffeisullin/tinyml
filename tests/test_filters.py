@@ -36,3 +36,15 @@ def test_sos_shape_for_firmware():
     sos = filters.design_sos()
     # 2 notches + 1 high-pass + 2 low-pass biquads
     assert sos.shape == (5, 6)
+
+
+def test_ads1115_config_words_match_the_datasheet():
+    """REQ-HW-02: diff A0-A1 +-2.048 V, fallback single A0 +-4.096 V; 250 SPS continuous, RDY pulse."""
+    from eegml import acquisition as acq
+    assert acq.CONFIG_DIFF == 0x04A0     # MUX 000, PGA 010, MODE 0, DR 101, COMP_QUE 00
+    assert acq.CONFIG_SINGLE == 0x42A0   # MUX 100, PGA 001
+    for w in (acq.CONFIG_DIFF, acq.CONFIG_SINGLE):
+        assert (w >> 8) & 1 == 0 and (w >> 5) & 0b111 == 0b101 and w & 0b11 != 0b11
+    assert acq.lsb_uv(2.048) == 62.5 and acq.lsb_uv(4.096) == 125.0
+    assert abs(acq.counts_to_uv(32767, 2.048, 1000.0) - 2047.9375) < 1e-9  # 32767 x 62.5 uV / 1000
+    assert abs(acq.counts_to_uv(-32768, 2.048, 1000.0) + 2048.0) < 1e-9
