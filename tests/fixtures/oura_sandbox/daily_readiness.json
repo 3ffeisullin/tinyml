@@ -1,0 +1,591 @@
+{
+ "daily_readiness-0-2026-10-24": {
+  "contributors": {
+   "activity_balance": 70,
+   "body_temperature": 70,
+   "hrv_balance": 80,
+   "previous_day_activity": 90,
+   "previous_night": 60,
+   "recovery_index": 90,
+   "resting_heart_rate": 60,
+   "sleep_balance": 70,
+   "sleep_regularity": null
+  },
+  "day": "2026-10-24",
+  "id": "daily_readiness-0-2026-10-24",
+  "score": 80,
+  "temperature_deviation": 0.5,
+  "temperature_trend_deviation": 0.2,
+  "timestamp": "2026-10-24T00:00:00.000+00:00"
+ },
+ "daily_readiness-0-2026-10-25": {
+  "contributors": {
+   "activity_balance": 70,
+   "body_temperature": 70,
+   "hrv_balance": 80,
+   "previous_day_activity": 90,
+   "previous_night": 60,
+   "recovery_index": 90,
+   "resting_heart_rate": 60,
+   "sleep_balance": 70,
+   "sleep_regularity": null
+  },
+  "day": "2026-10-25",
+  "id": "daily_readiness-0-2026-10-25",
+  "score": 80,
+  "temperature_deviation": 0.5,
+  "temperature_trend_deviation": 0.2,
+  "timestamp": "2026-10-25T00:00:00.000+00:00"
+ },
+ "daily_readiness-0-2026-10-26": {
+  "contributors": {
+   "activity_balance": 70,
+   "body_temperature": 70,
+   "hrv_balance": 80,
+   "previous_day_activity": 90,
+   "previous_night": 60,
+   "recovery_index": 90,
+   "resting_heart_rate": 60,
+   "sleep_balance": 70,
+   "sleep_regularity": null
+  },
+  "day": "2026-10-26",
+  "id": "daily_readiness-0-2026-10-26",
+  "score": 80,
+  "temperature_deviation": 0.5,
+  "temperature_trend_deviation": 0.2,
+  "timestamp": "2026-10-26T00:00:00.000+00:00"
+ },
+ "daily_readiness-0-2026-10-27": {
+  "contributors": {
+   "activity_balance": 70,
+   "body_temperature": 70,
+   "hrv_balance": 80,
+   "previous_day_activity": 90,
+   "previous_night": 60,
+   "recovery_index": 90,
+   "resting_heart_rate": 60,
+   "sleep_balance": 70,
+   "sleep_regularity": null
+  },
+  "day": "2026-10-27",
+  "id": "daily_readiness-0-2026-10-27",
+  "score": 80,
+  "temperature_deviation": 0.5,
+  "temperature_trend_deviation": 0.2,
+  "timestamp": "2026-10-27T00:00:00.000+00:00"
+ },
+ "daily_readiness-0-2026-10-28": {
+  "contributors": {
+   "activity_balance": 70,
+   "body_temperature": 70,
+   "hrv_balance": 80,
+   "previous_day_activity": 90,
+   "previous_night": 60,
+   "recovery_index": 90,
+   "resting_heart_rate": 60,
+   "sleep_balance": 70,
+   "sleep_regularity": null
+  },
+  "day": "2026-10-28",
+  "id": "daily_readiness-0-2026-10-28",
+  "score": 80,
+  "temperature_deviation": 0.5,
+  "temperature_trend_deviation": 0.2,
+  "timestamp": "2026-10-28T00:00:00.000+00:00"
+ },
+ "daily_readiness-0-2026-10-29": {
+  "contributors": {
+   "activity_balance": 70,
+   "body_temperature": 70,
+   "hrv_balance": 80,
+   "previous_day_activity": 90,
+   "previous_night": 60,
+   "recovery_index": 90,
+   "resting_heart_rate": 60,
+   "sleep_balance": 70,
+   "sleep_regularity": null
+  },
+  "day": "2026-10-29",
+  "id": "daily_readiness-0-2026-10-29",
+  "score": 80,
+  "temperature_deviation": 0.5,
+  "temperature_trend_deviation": 0.2,
+  "timestamp": "2026-10-29T00:00:00.000+00:00"
+ },
+ "daily_readiness-0-2026-10-30": {
+  "contributors": {
+   "activity_balance": 70,
+   "body_temperature": 70,
+   "hrv_balance": 80,
+   "previous_day_activity": 90,
+   "previous_night": 60,
+   "recovery_index": 90,
+   "resting_heart_rate": 60,
+   "sleep_balance": 70,
+   "sleep_regularity": null
+  },
+  "day": "2026-10-30",
+  "id": "daily_readiness-0-2026-10-30",
+  "score": 80,
+  "temperature_deviation": 0.5,
+  "temperature_trend_deviation": 0.2,
+  "timestamp": "2026-10-30T00:00:00.000+00:00"
+ },
+ "daily_readiness-0-2026-10-31": {
+  "contributors": {
+   "activity_balance": 70,
+   "body_temperature": 70,
+   "hrv_balance": 80,
+   "previous_day_activity": 90,
+   "previous_night": 60,
+   "recovery_index": 90,
+   "resting_heart_rate": 60,
+   "sleep_balance": 70,
+   "sleep_regularity": null
+  },
+  "day": "2026-10-31",
+  "id": "daily_readiness-0-2026-10-31",
+  "score": 80,
+  "temperature_deviation": 0.5,
+  "temperature_trend_deviation": 0.2,
+  "timestamp": "2026-10-31T00:00:00.000+00:00"
+ },
+ "daily_readiness-0-2026-11-1": {
+  "contributors": {
+   "activity_balance": 70,
+   "body_temperature": 70,
+   "hrv_balance": 80,
+   "previous_day_activity": 90,
+   "previous_night": 60,
+   "recovery_index": 90,
+   "resting_heart_rate": 60,
+   "sleep_balance": 70,
+   "sleep_regularity": null
+  },
+  "day": "2026-11-01",
+  "id": "daily_readiness-0-2026-11-1",
+  "score": 80,
+  "temperature_deviation": 0.5,
+  "temperature_trend_deviation": 0.2,
+  "timestamp": "2026-11-01T00:00:00.000+00:00"
+ },
+ "daily_readiness-0-2026-11-10": {
+  "contributors": {
+   "activity_balance": 70,
+   "body_temperature": 70,
+   "hrv_balance": 80,
+   "previous_day_activity": 90,
+   "previous_night": 60,
+   "recovery_index": 90,
+   "resting_heart_rate": 60,
+   "sleep_balance": 70,
+   "sleep_regularity": null
+  },
+  "day": "2026-11-10",
+  "id": "daily_readiness-0-2026-11-10",
+  "score": 80,
+  "temperature_deviation": 0.5,
+  "temperature_trend_deviation": 0.2,
+  "timestamp": "2026-11-10T00:00:00.000+00:00"
+ },
+ "daily_readiness-0-2026-11-11": {
+  "contributors": {
+   "activity_balance": 70,
+   "body_temperature": 70,
+   "hrv_balance": 80,
+   "previous_day_activity": 90,
+   "previous_night": 60,
+   "recovery_index": 90,
+   "resting_heart_rate": 60,
+   "sleep_balance": 70,
+   "sleep_regularity": null
+  },
+  "day": "2026-11-11",
+  "id": "daily_readiness-0-2026-11-11",
+  "score": 80,
+  "temperature_deviation": 0.5,
+  "temperature_trend_deviation": 0.2,
+  "timestamp": "2026-11-11T00:00:00.000+00:00"
+ },
+ "daily_readiness-0-2026-11-12": {
+  "contributors": {
+   "activity_balance": 70,
+   "body_temperature": 70,
+   "hrv_balance": 80,
+   "previous_day_activity": 90,
+   "previous_night": 60,
+   "recovery_index": 90,
+   "resting_heart_rate": 60,
+   "sleep_balance": 70,
+   "sleep_regularity": null
+  },
+  "day": "2026-11-12",
+  "id": "daily_readiness-0-2026-11-12",
+  "score": 80,
+  "temperature_deviation": 0.5,
+  "temperature_trend_deviation": 0.2,
+  "timestamp": "2026-11-12T00:00:00.000+00:00"
+ },
+ "daily_readiness-0-2026-11-13": {
+  "contributors": {
+   "activity_balance": 70,
+   "body_temperature": 70,
+   "hrv_balance": 80,
+   "previous_day_activity": 90,
+   "previous_night": 60,
+   "recovery_index": 90,
+   "resting_heart_rate": 60,
+   "sleep_balance": 70,
+   "sleep_regularity": null
+  },
+  "day": "2026-11-13",
+  "id": "daily_readiness-0-2026-11-13",
+  "score": 80,
+  "temperature_deviation": 0.5,
+  "temperature_trend_deviation": 0.2,
+  "timestamp": "2026-11-13T00:00:00.000+00:00"
+ },
+ "daily_readiness-0-2026-11-14": {
+  "contributors": {
+   "activity_balance": 70,
+   "body_temperature": 70,
+   "hrv_balance": 80,
+   "previous_day_activity": 90,
+   "previous_night": 60,
+   "recovery_index": 90,
+   "resting_heart_rate": 60,
+   "sleep_balance": 70,
+   "sleep_regularity": null
+  },
+  "day": "2026-11-14",
+  "id": "daily_readiness-0-2026-11-14",
+  "score": 80,
+  "temperature_deviation": 0.5,
+  "temperature_trend_deviation": 0.2,
+  "timestamp": "2026-11-14T00:00:00.000+00:00"
+ },
+ "daily_readiness-0-2026-11-15": {
+  "contributors": {
+   "activity_balance": 70,
+   "body_temperature": 70,
+   "hrv_balance": 80,
+   "previous_day_activity": 90,
+   "previous_night": 60,
+   "recovery_index": 90,
+   "resting_heart_rate": 60,
+   "sleep_balance": 70,
+   "sleep_regularity": null
+  },
+  "day": "2026-11-15",
+  "id": "daily_readiness-0-2026-11-15",
+  "score": 80,
+  "temperature_deviation": 0.5,
+  "temperature_trend_deviation": 0.2,
+  "timestamp": "2026-11-15T00:00:00.000+00:00"
+ },
+ "daily_readiness-0-2026-11-16": {
+  "contributors": {
+   "activity_balance": 70,
+   "body_temperature": 70,
+   "hrv_balance": 80,
+   "previous_day_activity": 90,
+   "previous_night": 60,
+   "recovery_index": 90,
+   "resting_heart_rate": 60,
+   "sleep_balance": 70,
+   "sleep_regularity": null
+  },
+  "day": "2026-11-16",
+  "id": "daily_readiness-0-2026-11-16",
+  "score": 80,
+  "temperature_deviation": 0.5,
+  "temperature_trend_deviation": 0.2,
+  "timestamp": "2026-11-16T00:00:00.000+00:00"
+ },
+ "daily_readiness-0-2026-11-17": {
+  "contributors": {
+   "activity_balance": 70,
+   "body_temperature": 70,
+   "hrv_balance": 80,
+   "previous_day_activity": 90,
+   "previous_night": 60,
+   "recovery_index": 90,
+   "resting_heart_rate": 60,
+   "sleep_balance": 70,
+   "sleep_regularity": null
+  },
+  "day": "2026-11-17",
+  "id": "daily_readiness-0-2026-11-17",
+  "score": 80,
+  "temperature_deviation": 0.5,
+  "temperature_trend_deviation": 0.2,
+  "timestamp": "2026-11-17T00:00:00.000+00:00"
+ },
+ "daily_readiness-0-2026-11-18": {
+  "contributors": {
+   "activity_balance": 70,
+   "body_temperature": 70,
+   "hrv_balance": 80,
+   "previous_day_activity": 90,
+   "previous_night": 60,
+   "recovery_index": 90,
+   "resting_heart_rate": 60,
+   "sleep_balance": 70,
+   "sleep_regularity": null
+  },
+  "day": "2026-11-18",
+  "id": "daily_readiness-0-2026-11-18",
+  "score": 80,
+  "temperature_deviation": 0.5,
+  "temperature_trend_deviation": 0.2,
+  "timestamp": "2026-11-18T00:00:00.000+00:00"
+ },
+ "daily_readiness-0-2026-11-19": {
+  "contributors": {
+   "activity_balance": 70,
+   "body_temperature": 70,
+   "hrv_balance": 80,
+   "previous_day_activity": 90,
+   "previous_night": 60,
+   "recovery_index": 90,
+   "resting_heart_rate": 60,
+   "sleep_balance": 70,
+   "sleep_regularity": null
+  },
+  "day": "2026-11-19",
+  "id": "daily_readiness-0-2026-11-19",
+  "score": 80,
+  "temperature_deviation": 0.5,
+  "temperature_trend_deviation": 0.2,
+  "timestamp": "2026-11-19T00:00:00.000+00:00"
+ },
+ "daily_readiness-0-2026-11-2": {
+  "contributors": {
+   "activity_balance": 70,
+   "body_temperature": 70,
+   "hrv_balance": 80,
+   "previous_day_activity": 90,
+   "previous_night": 60,
+   "recovery_index": 90,
+   "resting_heart_rate": 60,
+   "sleep_balance": 70,
+   "sleep_regularity": null
+  },
+  "day": "2026-11-02",
+  "id": "daily_readiness-0-2026-11-2",
+  "score": 80,
+  "temperature_deviation": 0.5,
+  "temperature_trend_deviation": 0.2,
+  "timestamp": "2026-11-02T00:00:00.000+00:00"
+ },
+ "daily_readiness-0-2026-11-20": {
+  "contributors": {
+   "activity_balance": 70,
+   "body_temperature": 70,
+   "hrv_balance": 80,
+   "previous_day_activity": 90,
+   "previous_night": 60,
+   "recovery_index": 90,
+   "resting_heart_rate": 60,
+   "sleep_balance": 70,
+   "sleep_regularity": null
+  },
+  "day": "2026-11-20",
+  "id": "daily_readiness-0-2026-11-20",
+  "score": 80,
+  "temperature_deviation": 0.5,
+  "temperature_trend_deviation": 0.2,
+  "timestamp": "2026-11-20T00:00:00.000+00:00"
+ },
+ "daily_readiness-0-2026-11-21": {
+  "contributors": {
+   "activity_balance": 70,
+   "body_temperature": 70,
+   "hrv_balance": 80,
+   "previous_day_activity": 90,
+   "previous_night": 60,
+   "recovery_index": 90,
+   "resting_heart_rate": 60,
+   "sleep_balance": 70,
+   "sleep_regularity": null
+  },
+  "day": "2026-11-21",
+  "id": "daily_readiness-0-2026-11-21",
+  "score": 80,
+  "temperature_deviation": 0.5,
+  "temperature_trend_deviation": 0.2,
+  "timestamp": "2026-11-21T00:00:00.000+00:00"
+ },
+ "daily_readiness-0-2026-11-22": {
+  "contributors": {
+   "activity_balance": 70,
+   "body_temperature": 70,
+   "hrv_balance": 80,
+   "previous_day_activity": 90,
+   "previous_night": 60,
+   "recovery_index": 90,
+   "resting_heart_rate": 60,
+   "sleep_balance": 70,
+   "sleep_regularity": null
+  },
+  "day": "2026-11-22",
+  "id": "daily_readiness-0-2026-11-22",
+  "score": 80,
+  "temperature_deviation": 0.5,
+  "temperature_trend_deviation": 0.2,
+  "timestamp": "2026-11-22T00:00:00.000+00:00"
+ },
+ "daily_readiness-0-2026-11-23": {
+  "contributors": {
+   "activity_balance": 70,
+   "body_temperature": 70,
+   "hrv_balance": 80,
+   "previous_day_activity": 90,
+   "previous_night": 60,
+   "recovery_index": 90,
+   "resting_heart_rate": 60,
+   "sleep_balance": 70,
+   "sleep_regularity": null
+  },
+  "day": "2026-11-23",
+  "id": "daily_readiness-0-2026-11-23",
+  "score": 80,
+  "temperature_deviation": 0.5,
+  "temperature_trend_deviation": 0.2,
+  "timestamp": "2026-11-23T00:00:00.000+00:00"
+ },
+ "daily_readiness-0-2026-11-3": {
+  "contributors": {
+   "activity_balance": 70,
+   "body_temperature": 70,
+   "hrv_balance": 80,
+   "previous_day_activity": 90,
+   "previous_night": 60,
+   "recovery_index": 90,
+   "resting_heart_rate": 60,
+   "sleep_balance": 70,
+   "sleep_regularity": null
+  },
+  "day": "2026-11-03",
+  "id": "daily_readiness-0-2026-11-3",
+  "score": 80,
+  "temperature_deviation": 0.5,
+  "temperature_trend_deviation": 0.2,
+  "timestamp": "2026-11-03T00:00:00.000+00:00"
+ },
+ "daily_readiness-0-2026-11-4": {
+  "contributors": {
+   "activity_balance": 70,
+   "body_temperature": 70,
+   "hrv_balance": 80,
+   "previous_day_activity": 90,
+   "previous_night": 60,
+   "recovery_index": 90,
+   "resting_heart_rate": 60,
+   "sleep_balance": 70,
+   "sleep_regularity": null
+  },
+  "day": "2026-11-04",
+  "id": "daily_readiness-0-2026-11-4",
+  "score": 80,
+  "temperature_deviation": 0.5,
+  "temperature_trend_deviation": 0.2,
+  "timestamp": "2026-11-04T00:00:00.000+00:00"
+ },
+ "daily_readiness-0-2026-11-5": {
+  "contributors": {
+   "activity_balance": 70,
+   "body_temperature": 70,
+   "hrv_balance": 80,
+   "previous_day_activity": 90,
+   "previous_night": 60,
+   "recovery_index": 90,
+   "resting_heart_rate": 60,
+   "sleep_balance": 70,
+   "sleep_regularity": null
+  },
+  "day": "2026-11-05",
+  "id": "daily_readiness-0-2026-11-5",
+  "score": 80,
+  "temperature_deviation": 0.5,
+  "temperature_trend_deviation": 0.2,
+  "timestamp": "2026-11-05T00:00:00.000+00:00"
+ },
+ "daily_readiness-0-2026-11-6": {
+  "contributors": {
+   "activity_balance": 70,
+   "body_temperature": 70,
+   "hrv_balance": 80,
+   "previous_day_activity": 90,
+   "previous_night": 60,
+   "recovery_index": 90,
+   "resting_heart_rate": 60,
+   "sleep_balance": 70,
+   "sleep_regularity": null
+  },
+  "day": "2026-11-06",
+  "id": "daily_readiness-0-2026-11-6",
+  "score": 80,
+  "temperature_deviation": 0.5,
+  "temperature_trend_deviation": 0.2,
+  "timestamp": "2026-11-06T00:00:00.000+00:00"
+ },
+ "daily_readiness-0-2026-11-7": {
+  "contributors": {
+   "activity_balance": 70,
+   "body_temperature": 70,
+   "hrv_balance": 80,
+   "previous_day_activity": 90,
+   "previous_night": 60,
+   "recovery_index": 90,
+   "resting_heart_rate": 60,
+   "sleep_balance": 70,
+   "sleep_regularity": null
+  },
+  "day": "2026-11-07",
+  "id": "daily_readiness-0-2026-11-7",
+  "score": 80,
+  "temperature_deviation": 0.5,
+  "temperature_trend_deviation": 0.2,
+  "timestamp": "2026-11-07T00:00:00.000+00:00"
+ },
+ "daily_readiness-0-2026-11-8": {
+  "contributors": {
+   "activity_balance": 70,
+   "body_temperature": 70,
+   "hrv_balance": 80,
+   "previous_day_activity": 90,
+   "previous_night": 60,
+   "recovery_index": 90,
+   "resting_heart_rate": 60,
+   "sleep_balance": 70,
+   "sleep_regularity": null
+  },
+  "day": "2026-11-08",
+  "id": "daily_readiness-0-2026-11-8",
+  "score": 80,
+  "temperature_deviation": 0.5,
+  "temperature_trend_deviation": 0.2,
+  "timestamp": "2026-11-08T00:00:00.000+00:00"
+ },
+ "daily_readiness-0-2026-11-9": {
+  "contributors": {
+   "activity_balance": 70,
+   "body_temperature": 70,
+   "hrv_balance": 80,
+   "previous_day_activity": 90,
+   "previous_night": 60,
+   "recovery_index": 90,
+   "resting_heart_rate": 60,
+   "sleep_balance": 70,
+   "sleep_regularity": null
+  },
+  "day": "2026-11-09",
+  "id": "daily_readiness-0-2026-11-9",
+  "score": 80,
+  "temperature_deviation": 0.5,
+  "temperature_trend_deviation": 0.2,
+  "timestamp": "2026-11-09T00:00:00.000+00:00"
+ }
+}

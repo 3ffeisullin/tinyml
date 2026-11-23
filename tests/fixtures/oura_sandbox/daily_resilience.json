@@ -1,0 +1,312 @@
+{
+ "daily_resilience-0-2026-10-25": {
+  "contributors": {
+   "daytime_recovery": 70.0,
+   "sleep_recovery": 80.0,
+   "stress": 90.0
+  },
+  "day": "2026-10-25",
+  "id": "daily_resilience-0-2026-10-25",
+  "level": "limited"
+ },
+ "daily_resilience-0-2026-10-27": {
+  "contributors": {
+   "daytime_recovery": 70.0,
+   "sleep_recovery": 80.0,
+   "stress": 90.0
+  },
+  "day": "2026-10-27",
+  "id": "daily_resilience-0-2026-10-27",
+  "level": "limited"
+ },
+ "daily_resilience-0-2026-10-29": {
+  "contributors": {
+   "daytime_recovery": 70.0,
+   "sleep_recovery": 80.0,
+   "stress": 90.0
+  },
+  "day": "2026-10-29",
+  "id": "daily_resilience-0-2026-10-29",
+  "level": "limited"
+ },
+ "daily_resilience-0-2026-10-31": {
+  "contributors": {
+   "daytime_recovery": 70.0,
+   "sleep_recovery": 80.0,
+   "stress": 90.0
+  },
+  "day": "2026-10-31",
+  "id": "daily_resilience-0-2026-10-31",
+  "level": "limited"
+ },
+ "daily_resilience-0-2026-11-10": {
+  "contributors": {
+   "daytime_recovery": 70.0,
+   "sleep_recovery": 80.0,
+   "stress": 90.0
+  },
+  "day": "2026-11-10",
+  "id": "daily_resilience-0-2026-11-10",
+  "level": "limited"
+ },
+ "daily_resilience-0-2026-11-12": {
+  "contributors": {
+   "daytime_recovery": 70.0,
+   "sleep_recovery": 80.0,
+   "stress": 90.0
+  },
+  "day": "2026-11-12",
+  "id": "daily_resilience-0-2026-11-12",
+  "level": "limited"
+ },
+ "daily_resilience-0-2026-11-14": {
+  "contributors": {
+   "daytime_recovery": 70.0,
+   "sleep_recovery": 80.0,
+   "stress": 90.0
+  },
+  "day": "2026-11-14",
+  "id": "daily_resilience-0-2026-11-14",
+  "level": "limited"
+ },
+ "daily_resilience-0-2026-11-16": {
+  "contributors": {
+   "daytime_recovery": 70.0,
+   "sleep_recovery": 80.0,
+   "stress": 90.0
+  },
+  "day": "2026-11-16",
+  "id": "daily_resilience-0-2026-11-16",
+  "level": "limited"
+ },
+ "daily_resilience-0-2026-11-18": {
+  "contributors": {
+   "daytime_recovery": 70.0,
+   "sleep_recovery": 80.0,
+   "stress": 90.0
+  },
+  "day": "2026-11-18",
+  "id": "daily_resilience-0-2026-11-18",
+  "level": "limited"
+ },
+ "daily_resilience-0-2026-11-2": {
+  "contributors": {
+   "daytime_recovery": 70.0,
+   "sleep_recovery": 80.0,
+   "stress": 90.0
+  },
+  "day": "2026-11-02",
+  "id": "daily_resilience-0-2026-11-2",
+  "level": "limited"
+ },
+ "daily_resilience-0-2026-11-20": {
+  "contributors": {
+   "daytime_recovery": 70.0,
+   "sleep_recovery": 80.0,
+   "stress": 90.0
+  },
+  "day": "2026-11-20",
+  "id": "daily_resilience-0-2026-11-20",
+  "level": "limited"
+ },
+ "daily_resilience-0-2026-11-22": {
+  "contributors": {
+   "daytime_recovery": 70.0,
+   "sleep_recovery": 80.0,
+   "stress": 90.0
+  },
+  "day": "2026-11-22",
+  "id": "daily_resilience-0-2026-11-22",
+  "level": "limited"
+ },
+ "daily_resilience-0-2026-11-4": {
+  "contributors": {
+   "daytime_recovery": 70.0,
+   "sleep_recovery": 80.0,
+   "stress": 90.0
+  },
+  "day": "2026-11-04",
+  "id": "daily_resilience-0-2026-11-4",
+  "level": "limited"
+ },
+ "daily_resilience-0-2026-11-6": {
+  "contributors": {
+   "daytime_recovery": 70.0,
+   "sleep_recovery": 80.0,
+   "stress": 90.0
+  },
+  "day": "2026-11-06",
+  "id": "daily_resilience-0-2026-11-6",
+  "level": "limited"
+ },
+ "daily_resilience-0-2026-11-8": {
+  "contributors": {
+   "daytime_recovery": 70.0,
+   "sleep_recovery": 80.0,
+   "stress": 90.0
+  },
+  "day": "2026-11-08",
+  "id": "daily_resilience-0-2026-11-8",
+  "level": "limited"
+ },
+ "daily_resilience-1-2026-10-24": {
+  "contributors": {
+   "daytime_recovery": 90.0,
+   "sleep_recovery": 90.0,
+   "stress": 90.0
+  },
+  "day": "2026-10-24",
+  "id": "daily_resilience-1-2026-10-24",
+  "level": "solid"
+ },
+ "daily_resilience-1-2026-10-26": {
+  "contributors": {
+   "daytime_recovery": 90.0,
+   "sleep_recovery": 90.0,
+   "stress": 90.0
+  },
+  "day": "2026-10-26",
+  "id": "daily_resilience-1-2026-10-26",
+  "level": "solid"
+ },
+ "daily_resilience-1-2026-10-28": {
+  "contributors": {
+   "daytime_recovery": 90.0,
+   "sleep_recovery": 90.0,
+   "stress": 90.0
+  },
+  "day": "2026-10-28",
+  "id": "daily_resilience-1-2026-10-28",
+  "level": "solid"
+ },
+ "daily_resilience-1-2026-10-30": {
+  "contributors": {
+   "daytime_recovery": 90.0,
+   "sleep_recovery": 90.0,
+   "stress": 90.0
+  },
+  "day": "2026-10-30",
+  "id": "daily_resilience-1-2026-10-30",
+  "level": "solid"
+ },
+ "daily_resilience-1-2026-11-1": {
+  "contributors": {
+   "daytime_recovery": 90.0,
+   "sleep_recovery": 90.0,
+   "stress": 90.0
+  },
+  "day": "2026-11-01",
+  "id": "daily_resilience-1-2026-11-1",
+  "level": "solid"
+ },
+ "daily_resilience-1-2026-11-11": {
+  "contributors": {
+   "daytime_recovery": 90.0,
+   "sleep_recovery": 90.0,
+   "stress": 90.0
+  },
+  "day": "2026-11-11",
+  "id": "daily_resilience-1-2026-11-11",
+  "level": "solid"
+ },
+ "daily_resilience-1-2026-11-13": {
+  "contributors": {
+   "daytime_recovery": 90.0,
+   "sleep_recovery": 90.0,
+   "stress": 90.0
+  },
+  "day": "2026-11-13",
+  "id": "daily_resilience-1-2026-11-13",
+  "level": "solid"
+ },
+ "daily_resilience-1-2026-11-15": {
+  "contributors": {
+   "daytime_recovery": 90.0,
+   "sleep_recovery": 90.0,
+   "stress": 90.0
+  },
+  "day": "2026-11-15",
+  "id": "daily_resilience-1-2026-11-15",
+  "level": "solid"
+ },
+ "daily_resilience-1-2026-11-17": {
+  "contributors": {
+   "daytime_recovery": 90.0,
+   "sleep_recovery": 90.0,
+   "stress": 90.0
+  },
+  "day": "2026-11-17",
+  "id": "daily_resilience-1-2026-11-17",
+  "level": "solid"
+ },
+ "daily_resilience-1-2026-11-19": {
+  "contributors": {
+   "daytime_recovery": 90.0,
+   "sleep_recovery": 90.0,
+   "stress": 90.0
+  },
+  "day": "2026-11-19",
+  "id": "daily_resilience-1-2026-11-19",
+  "level": "solid"
+ },
+ "daily_resilience-1-2026-11-21": {
+  "contributors": {
+   "daytime_recovery": 90.0,
+   "sleep_recovery": 90.0,
+   "stress": 90.0
+  },
+  "day": "2026-11-21",
+  "id": "daily_resilience-1-2026-11-21",
+  "level": "solid"
+ },
+ "daily_resilience-1-2026-11-23": {
+  "contributors": {
+   "daytime_recovery": 90.0,
+   "sleep_recovery": 90.0,
+   "stress": 90.0
+  },
+  "day": "2026-11-23",
+  "id": "daily_resilience-1-2026-11-23",
+  "level": "solid"
+ },
+ "daily_resilience-1-2026-11-3": {
+  "contributors": {
+   "daytime_recovery": 90.0,
+   "sleep_recovery": 90.0,
+   "stress": 90.0
+  },
+  "day": "2026-11-03",
+  "id": "daily_resilience-1-2026-11-3",
+  "level": "solid"
+ },
+ "daily_resilience-1-2026-11-5": {
+  "contributors": {
+   "daytime_recovery": 90.0,
+   "sleep_recovery": 90.0,
+   "stress": 90.0
+  },
+  "day": "2026-11-05",
+  "id": "daily_resilience-1-2026-11-5",
+  "level": "solid"
+ },
+ "daily_resilience-1-2026-11-7": {
+  "contributors": {
+   "daytime_recovery": 90.0,
+   "sleep_recovery": 90.0,
+   "stress": 90.0
+  },
+  "day": "2026-11-07",
+  "id": "daily_resilience-1-2026-11-7",
+  "level": "solid"
+ },
+ "daily_resilience-1-2026-11-9": {
+  "contributors": {
+   "daytime_recovery": 90.0,
+   "sleep_recovery": 90.0,
+   "stress": 90.0
+  },
+  "day": "2026-11-09",
+  "id": "daily_resilience-1-2026-11-9",
+  "level": "solid"
+ }
+}
