@@ -442,19 +442,8 @@ def test_missing_expires_in_defaults_to_an_hour():
     assert t.expires_at == NOW + 3600
 
 
-def test_live_screenshots_only_under_data(tmp_path):
-    import sys
-    from pathlib import Path
-    sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "scripts"))
-    import demo_display as dd
-    assert not dd.live_save_allowed(dd.REPO / "reports" / "oura_live.png")
-    assert not dd.live_save_allowed(dd.REPO / "screen.png")
-    assert dd.live_save_allowed(dd.REPO / "data" / "oura" / "screen.png")
-    assert dd.live_save_allowed(tmp_path / "screen.png")                       # outside the repo: user's choice
-
-
 def test_everything_under_data_is_git_ignored():
-    """The live-screenshot guard allows data/ because git ignores all of it; keep that true."""
+    """Data downloads (Oura pulls, Sleep-EDF caches) live under data/ and must never be committed."""
     import shutil
     import subprocess
     from pathlib import Path
@@ -464,6 +453,9 @@ def test_everything_under_data_is_git_ignored():
     for p in ("data/rehearsal/oura.png", "data/oura/screen.png", "data/anything/x.json"):
         r = subprocess.run(["git", "check-ignore", "-q", p], cwd=root)
         assert r.returncode == 0, f"{p} is not git-ignored"
+    # Screenshots of Farid's nights may be committed to reports/ (his decision, 2026-11-24)
+    r = subprocess.run(["git", "check-ignore", "-q", "reports/oura_live_2026-11-23.png"], cwd=root)
+    assert r.returncode == 1, "reports/ screenshots should not be git-ignored"
 
 
 def test_cli_reports_a_held_token_lock_and_exits_non_zero(tmp_path, monkeypatch, capsys):

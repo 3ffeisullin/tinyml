@@ -35,13 +35,14 @@ A projector or external monitor connected to the laptop counts as mains: with on
 connected, electrodes on a person only through the USB isolator.
 
 ## Privacy
-- Farid's Oura data (sleep, heart rate, HRV, scores) never goes into the repo, PRs, Notion or slides.
-  Screenshots of it only under `data/` (all of `data/` is git-ignored; a test checks it). For anything
-  shown or committed, use `scripts/demo_display.py oura --demo` (sample nights) or `--sandbox`.
+- **Farid's Oura ring data may be shown for this work** (Farid, 2026-11-24; replaces the earlier
+  never-show rule): in the demo, slides, Notion, PRs, STATUS and docs, including his values and screens of
+  his nights (`scripts/demo_display.py oura`). `--demo` (sample nights) stays available as the fallback.
+- The raw downloads stay out of git: all of `data/` is git-ignored (a test checks it), as for any data download.
+- Tests use fixtures (`tests/fixtures/oura_demo/`, `oura_sandbox/`) or invented values, never files from
+  `data/`, so they pass on any machine.
 - Never print or paste the Oura client secret or tokens (secret in `.env`, tokens in Windows Credential
   Manager, service `tinyml-oura`).
-- Test values for Oura code are invented and made to look invented (e.g. 12345 steps, 12.345 breaths/min),
-  never taken from `data/`. The same goes for examples in docstrings, STATUS, commit messages and PRs.
 
 ## If the previous session crashed
 Rebuild context before changing anything: this file, `git fetch --all --prune`, `git status`,

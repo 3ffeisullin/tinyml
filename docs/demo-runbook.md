@@ -30,7 +30,7 @@ Plan B has no electrodes and no restrictions.
 - [ ] Laptop charged to 100 % (Plan A on battery: the live part runs on battery).
 - [ ] Data cable (not a charge-only cable), USB isolator, headband, gel, wipes packed.
 - [ ] One full dry run of this runbook, timed.
-- [ ] Decide what the Oura segment shows (see segment 3): your nights, or the sample nights.
+- [x] Oura segment shows Farid's nights (decided 2026-11-24); `--demo` is the fallback (segment 3).
 
 ## On the morning
 
@@ -103,15 +103,15 @@ demo_display.py live --source fake --port COM5
 ### 3. Oura ring (2 min)
 
 ```
-demo_display.py oura            # the ring's nights (Farid's data)
-demo_display.py oura --demo     # 14 sample nights: Sleep-EDF expert stages, simulated heart rate/HRV
+demo_display.py oura            # the ring's nights (Farid's data): the default
+demo_display.py oura --demo     # fallback: 14 sample nights, Sleep-EDF expert stages, simulated heart rate/HRV
 ```
 - Oura stages sleep from heart rate, HRV, movement and temperature, not EEG; light = N1 + N2. It's
   context and a weak reference (REQ-OURA-08: comparing it with the headband overnight is the next phase).
 - Pulled automatically twice a day through the Oura API v2 (OAuth, tokens in Windows Credential Manager).
-- **Privacy:** the plain `oura` view shows Farid's personal health data on the projector. Only use it if
-  he's happy to; otherwise show `--demo` (it says "Sample nights" in the subtitle). Never save a screenshot
-  of the real data into the repo (the script refuses anyway).
+- **Farid's data may be shown** (his decision, 2026-11-24), so the plain `oura` view is the default. Use
+  `--demo` (it says "Sample nights" in the subtitle) if the ring hasn't synced or the sign-in fails.
+  For a slide: `demo_display.py oura --headless --save reports/oura_live_<day>.png` (may be committed).
 
 ### 4. Close (1 min)
 
