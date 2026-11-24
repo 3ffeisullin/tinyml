@@ -3,6 +3,22 @@
 Research note for the first demo (2026-11-27), where deep sleep is the lead topic. By Claude Code (laptop),
 2026-11-22. Results from this repo are reproducible with the scripts named; outside facts carry a source.
 
+## 0. Why deep sleep is the lead topic
+
+The project exists because the Oura Ring's nightly deep-sleep number is
+unreliable. The ring has no EEG: it infers stages from heart rate, HRV,
+temperature and movement, while deep sleep is defined by frontal slow waves
+(§1). In healthy adults it is right on average but agrees poorly night by
+night (ICC 0.32, Robbins et al., Sensors 2024). In adolescents it
+over-estimated deep sleep by 31.5–46.8 min per night (Chee et al., 2021);
+an earlier study found it under-estimated by about 20 min (de Zambotti et
+al., 2017). The AASM position statement on consumer sleep technology (lead
+author Seema Khosla, a pulmonologist and sleep physician) says these devices
+are not validated for diagnosis or treatment. Oura is still among the
+better-validated consumer trackers; the gap this project targets is the
+per-night deep-sleep total, which is also where our own model is weakest
+(§3). Full study list with links: README.md, "Why this project".
+
 ## 1. What scorers call deep sleep
 
 - **The rule (AASM, 2007 onward):** a 30 s epoch is N3 when **slow waves** (0.5–2 Hz, larger than **75 µV
