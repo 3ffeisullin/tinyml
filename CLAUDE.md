@@ -13,6 +13,8 @@ Oura API v2 integration. Work is shared between a Claude cloud session
 1. Add a dated line to `docs/STATUS.md` §6 (newest first) saying what changed, and update §2, §3, §4 and §5 as needed.
 2. If you met a requirement, set its Status in `docs/requirements.md`.
 3. Commit on a feature branch, push, and open or update a PR into `master`. Don't merge; Farid merges.
+   When a PR that changes only `docs/STATUS.md` is merged, don't open another PR just to record it: note the
+   merge in the §6 line of the next real piece of work, on that work's branch (Notion can be updated at once).
 4. If the Notion connector is available, mirror the change on the Notion page "TinyML EEG — Project Status & Handoff" (https://app.notion.com/p/41a46e5740dc8194be90f034e4384471). If not, say so in the log line; the cloud session will sync it.
 
 ## Environment (Windows, PowerShell)
@@ -38,6 +40,8 @@ connected, electrodes on a person only through the USB isolator.
   shown or committed, use `scripts/demo_display.py oura --demo` (sample nights) or `--sandbox`.
 - Never print or paste the Oura client secret or tokens (secret in `.env`, tokens in Windows Credential
   Manager, service `tinyml-oura`).
+- Test values for Oura code are invented and made to look invented (e.g. 12345 steps, 12.345 breaths/min),
+  never taken from `data/`. The same goes for examples in docstrings, STATUS, commit messages and PRs.
 
 ## If the previous session crashed
 Rebuild context before changing anything: this file, `git fetch --all --prune`, `git status`,
