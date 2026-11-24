@@ -72,6 +72,17 @@ def test_hours_and_minutes():
     assert rows["In bed"].endswith(" min") and " h " in rows["In bed"]
 
 
+def test_number_formatting():
+    v = {"summary": None, "night": {"latency": 1560, "average_breath": 13.375},
+         "daily_activity": {"steps": 15266, "total_calories": 2752},
+         "daily_stress": {"stress_high": 0, "recovery_high": 5400}, "hr_samples": []}
+    rows = dict(day_lines(v))
+    assert rows["Time to fall asleep"] == "26 min"
+    assert rows["Breathing rate"] == "13.4 /min"
+    assert rows["Steps"] == "15,266" and rows["Total calories"] == "2,752 kcal"
+    assert rows["High stress"] == "0 min" and rows["High recovery"] == "1 h 30 min"
+
+
 def test_line_breaks_at_gaps_and_screen_renders(tmp_path):
     import matplotlib
     matplotlib.use("Agg")

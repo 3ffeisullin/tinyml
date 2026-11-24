@@ -7,8 +7,8 @@ before starting, and update it before you stop.
 
 ## 0. Resume here
 
-- **master** is at `0dc6753` (2026-11-23): PRs #3 → #10 merged as merge commits (#3–#10 by the cloud session, each on Farid's explicit one-time instruction; "Farid merges" still applies to every other PR). Code last changed in #9; #10 was docs only. Checked on the laptop at `8c2c586`: 98 tests pass (real-data test included), vectors unchanged, `firmware/eeg_node` compiles (11 % flash, 28 % RAM). New work: a new branch from `master`.
-- **Branches:** only `master`. Merged and deleted: `feature/int8-sleep-model`, `feature/demo-display`, `feature/palma-review`, `feature/oura-app`, `feature/signal-quality`, `docs/post-merge-status`, `feature/demo-runbook`, `docs/status-after-pr9`.
+- **master** is at `c2733a9` (2026-11-23): PRs #3 → #11 merged as merge commits (#3–#11 by the cloud session, each on Farid's explicit one-time instruction; "Farid merges" still applies to every other PR). Code last changed in #9; #10 and #11 were docs only. Checked on the laptop at `8c2c586`: 98 tests pass, vectors unchanged, `firmware/eeg_node` compiles (11 % flash, 28 % RAM). New work: a new branch from `master`.
+- **Branches:** only `master`. Merged and deleted: `feature/int8-sleep-model`, `feature/demo-display`, `feature/palma-review`, `feature/oura-app`, `feature/signal-quality`, `docs/post-merge-status`, `feature/demo-runbook`, `docs/status-after-pr9`, `docs/status-after-pr10`.
 - **Read first:** `docs/deep-sleep.md` (deep sleep, the demo's lead topic: rule, accuracy of experts/Oura/us, next steps), `docs/palma-mapping.md` (what we take from Palma et al. 2024, and why), `docs/briefs/2026-11-22-demo-display.md` (task 7d), `docs/briefs/2026-11-22-deck-update.md` (everything since 2026-11-21, demo Plan A/B, risks, corrected figures), `docs/model-provenance.md` (where the model and data come from), `docs/bringup.md` (wiring-day checklist); details in the other `docs/briefs/`.
 - **On the XIAO:** the whole chain runs on the board. A replayed held-out night matches Python's stages on 100 % of epochs. The live path (core-0 acquisition → queue → core-1 processing → stages) ran 335 s from a fake 250 Hz source with 0 missed samples. Still to prove with the parts: the ADS1115 I2C reads, the ALERT/RDY interrupt and the ADC's real rate.
 - **Demo:** Friday 2026-11-27 (may move to the following week), **with Oura data** (Farid, 2026-11-22). Plan A: live headband signal + replayed-night staging + Oura + on-device checks. Plan B (parts late): the same without live signal. In hand: resistors, capacitors, electrodes; the rest (BioAmp EXG Pill, ADS1115, …) is due around 2026-11-26.
@@ -34,7 +34,7 @@ before starting, and update it before you stop.
 
 ## 2. Current state
 
-**master is `0dc6753`** (2026-11-23): PRs #1–#10 merged; **no PRs open** (apart from the STATUS-only PR for this line). Code unchanged since `8c2c586`, checked on the laptop there: 98 tests pass, test vectors unchanged, `firmware/eeg_node` compiles (400,893 bytes flash, 11 %; 94,904 bytes RAM, 28 %).
+**master is `c2733a9`** (2026-11-23): PRs #1–#11 merged. Code unchanged since `8c2c586`, checked on the laptop there: 98 tests pass, test vectors unchanged, `firmware/eeg_node` compiles (400,893 bytes flash, 11 %; 94,904 bytes RAM, 28 %). Open: draft PR for `feature/oura-screen-check`.
 
 | Phase | Item | Status | Where |
 |---|---|---|---|
@@ -121,13 +121,15 @@ Code: confirm each line, fix anything wrong, fill the blanks, and note the date.
 | 7a | ~~ADS1115 driver and 250 Hz sampling loop, written and compiled before the parts arrive (fake-ADC mode for testing)~~ Done 2026-11-22: fake source verified on the XIAO | Claude Code | REQ-ACQ-* |
 | 7d | ~~Laptop demo display~~ Done 2026-11-22: `scripts/demo_display.py` (replay view: board hypnogram building up next to the experts', band power, running scores; `--port none` fallback; live view: band power, relative alpha, stages, rate and error counters). Branch `feature/demo-display` | Claude Code | — |
 | 7 | ADS1115 acquisition once parts arrive (around 2026-11-26): wiring and bring-up per `docs/bringup.md`, live band powers. Electrodes on a person only with the XIAO on battery, through the USB isolator, or with the laptop on battery (REQ-SAFE). | Claude Code | REQ-HW-*, REQ-ACQ-* |
-| 8 | **Now:** after Farid syncs the ring (night of 2026-11-22/23), `python -m hub.oura_app pull` and render the Oura screen to `data/oura/` (git-ignored) to check it; never commit or post his values | Claude Code | REQ-OURA-04/05 |
+| 8 | ~~After Farid syncs the ring, pull and check the Oura screen~~ Done 2026-11-23 (`feature/oura-screen-check`); screens of his data stay in `data/oura/` | Claude Code | REQ-OURA-04/05 |
 | 7e | **Plan A dry run** after bring-up (battery only, or the USB isolator with a projector): follow `docs/demo-runbook.md`, add results to its rehearsal log, send changed numbers to the cloud session (deck) | Claude Code | REQ-SAFE-01..03 |
 | 9 | **After the demo:** Docker hub (5b), overnight recording next to the ring (phase D, REQ-OURA-08/09), REQ-FEAT-12 slow-wave features, VBUS sense pin (REQ-SAFE-02), confirm a live token expiry (REQ-OURA-03) | Claude Code | various |
 
 ## 6. Handoff log
 
 Newest first. One line per change: date, who, what, where.
+
+- 2026-11-23 · Claude Code (laptop) · **Oura screen check** after Farid synced the ring: `pull` added the night of 2026-11-22/23 (2 nights stored now); screen rendered only to git-ignored `data/oura/`; values not copied anywhere. It looked right (stage blocks, heart-rate/HRV gaps, deep-sleep trend). Fixed number formatting in `hub/oura_app/report.py` (also the `day` command): time to fall asleep and stress/recovery in h/min ("26.0 min" → "26 min"), breathing rate to 1 decimal (Oura sends 3), thousands separators for steps and calories; new test, 99 tests pass; `reports/oura_demo_2026-11-22.png` re-rendered. Also recorded here: **PR #11 merged** (STATUS only, Farid's instruction; master `c2733a9`), `docs/status-after-pr10` deleted. New rule (Farid), added to `CLAUDE.md`: a merged STATUS-only PR gets no PR of its own; its merge goes in the next real work's log line. Notion updated.
 
 - 2026-11-23 · Claude Code (laptop) · **PR #10 merged** by the cloud session (Farid's explicit instruction, this PR only): master `0dc6753`; repo `CLAUDE.md` now has the Privacy, projector-safety, "If the previous session crashed" and "Shared with the cloud session" sections that Farid's recovery prompt relies on. Deleted `docs/status-after-pr9` on GitHub and locally (confirmed in `origin/master` first). Docs only; tests not rerun. Next unchanged: Oura screen check after tonight's ring sync; bring-up ~11-26, then the Plan A dry run; Farid picks the Oura view; demo Friday 2026-11-27 (may move a week). Notion updated.
 
