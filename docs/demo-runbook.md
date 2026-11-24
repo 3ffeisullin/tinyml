@@ -111,8 +111,7 @@ demo_display.py oura --demo     # fallback: 14 sample nights, Sleep-EDF expert s
 - Pulled automatically twice a day through the Oura API v2 (OAuth, tokens in Windows Credential Manager).
 - **Farid's data may be shown** (his decision, 2026-11-24), so the plain `oura` view is the default. Use
   `--demo` (it says "Sample nights" in the subtitle) if the ring hasn't synced or the sign-in fails.
-  `--save` still writes the ring's data only under `data/` (git-ignored); copy a screenshot from there
-  for the slides.
+  For a slide: `demo_display.py oura --headless --save reports/oura_live_<day>.png` (may be committed).
 
 ### 4. Close (1 min)
 

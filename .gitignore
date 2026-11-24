@@ -16,8 +16,5 @@ data/cache/
 *.env
 !.env.example
 secrets/
-# Oura data pulled by hub/oura_app (personal health data, never commit)
+# Oura data pulled by hub/oura_app (raw downloads, never commit; screenshots in reports/ may be committed)
 data/oura/
-# Screenshots of the ring's real data (demo_display.py oura without --demo/--sandbox refuses these anyway)
-reports/oura_live*.png
-**/oura_live*.png
