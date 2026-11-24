@@ -6,6 +6,30 @@ Seeed XIAO ESP32-S3 with TensorFlow Lite Micro. (Qualcomm/Snapdragon work is a s
 > Hobby/research project: it makes no medical or diagnostic claims (REQ-SAFE-04). Where the sleep model and its
 > training data come from, in plain language: [`docs/model-provenance.md`](docs/model-provenance.md).
 
+## Why this project
+
+The Oura Ring estimates deep sleep from heart rate, heart-rate variability,
+skin temperature and movement. Deep sleep (N3) is defined by brain waves:
+frontal slow waves larger than 75 µV, scored against the mastoid. Studies
+against polysomnography (PSG) find the ring right on average in healthy
+adults, but poor for any single night:
+
+| Study | Who | Deep-sleep finding |
+|---|---|---|
+| [Robbins et al., Sensors 2024](https://www.mdpi.com/1424-8220/24/20/6532) | 35 healthy adults, 20–50 | Same average as PSG (95 min), but poor night-by-night agreement (ICC 0.32) |
+| [Chee et al., Nature and Science of Sleep 2021](https://pmc.ncbi.nlm.nih.gov/articles/PMC7894804) | 53 adolescents, 15–19 | Over-estimated deep sleep by 31.5–46.8 min per night |
+| [de Zambotti et al., Behavioral Sleep Medicine 2017](https://pmc.ncbi.nlm.nih.gov/articles/PMC6095823) | 41 adolescents and young adults | Under-estimated deep sleep by about 20 min |
+| [Kainec et al., Sensors 2024](https://www.mdpi.com/1424-8220/24/2/635) | 53 young adults, five devices | Deep-sleep error above 20 % for every device |
+
+The American Academy of Sleep Medicine's
+[position statement](https://aasm.org/clinical-resources/consumer-sleep-technology/),
+led by pulmonologist and sleep physician Seema Khosla, says consumer sleep
+trackers are not validated for diagnosing or treating sleep disorders.
+
+This project records the signal deep sleep is defined by (forehead EEG, Fp1
+against the opposite mastoid), stages sleep on the device, and compares each
+night's deep sleep with the ring's. Details: [`docs/deep-sleep.md`](docs/deep-sleep.md).
+
 ## Project status (2026-11-23)
 
 | Phase | State |
