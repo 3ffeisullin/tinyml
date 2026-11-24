@@ -7,8 +7,8 @@ before starting, and update it before you stop.
 
 ## 0. Resume here
 
-- **master** is at `0ea382c` (2026-11-23): PRs #3 → #13 merged as merge commits (#12 closed, replaced by #13; all by the cloud session, each on Farid's explicit one-time instruction; "Farid merges" still applies to every other PR). 99 tests pass. New work: a new branch from `master`.
-- **Branches:** only `master`. Merged and deleted: `feature/int8-sleep-model`, `feature/demo-display`, `feature/palma-review`, `feature/oura-app`, `feature/signal-quality`, `docs/post-merge-status`, `feature/demo-runbook`, `docs/status-after-pr9`, `docs/status-after-pr10`, `feature/oura-screen-check` (PR #12, closed), `feature/oura-number-format`.
+- **master** is at `95960ca` (2026-11-24): PRs #3 → #14 merged as merge commits (#12 closed, replaced by #13; all by the cloud session, each on Farid's explicit one-time instruction; "Farid merges" still applies to every other PR). 99 tests pass. New work: a new branch from `master`.
+- **Branches:** only `master`. Merged and deleted: `feature/int8-sleep-model`, `feature/demo-display`, `feature/palma-review`, `feature/oura-app`, `feature/signal-quality`, `docs/post-merge-status`, `feature/demo-runbook`, `docs/status-after-pr9`, `docs/status-after-pr10`, `feature/oura-screen-check` (PR #12, closed), `feature/oura-number-format`, `docs/motivation`.
 - **Read first:** `docs/deep-sleep.md` (deep sleep, the demo's lead topic: rule, accuracy of experts/Oura/us, next steps), `docs/palma-mapping.md` (what we take from Palma et al. 2024, and why), `docs/briefs/2026-11-22-demo-display.md` (task 7d), `docs/briefs/2026-11-22-deck-update.md` (everything since 2026-11-21, demo Plan A/B, risks, corrected figures), `docs/model-provenance.md` (where the model and data come from), `docs/bringup.md` (wiring-day checklist); details in the other `docs/briefs/`.
 - **On the XIAO:** the whole chain runs on the board. A replayed held-out night matches Python's stages on 100 % of epochs. The live path (core-0 acquisition → queue → core-1 processing → stages) ran 335 s from a fake 250 Hz source with 0 missed samples. Still to prove with the parts: the ADS1115 I2C reads, the ALERT/RDY interrupt and the ADC's real rate.
 - **Demo:** Friday 2026-11-27 (may move to the following week), **with Oura data** (Farid, 2026-11-22). Plan A: live headband signal + replayed-night staging + Oura + on-device checks. Plan B (parts late): the same without live signal. In hand: resistors, capacitors, electrodes; the rest (BioAmp EXG Pill, ADS1115, …) is due around 2026-11-26.
@@ -34,7 +34,7 @@ before starting, and update it before you stop.
 
 ## 2. Current state
 
-**master is `0ea382c`** (2026-11-23): PRs #1–#13 merged (#12 closed, replaced by #13). 99 tests pass; `firmware/eeg_node` unchanged since `8c2c586` (400,893 bytes flash, 11 %; 94,904 bytes RAM, 28 %). Open: draft PR for `docs/motivation`.
+**master is `95960ca`** (2026-11-24): PRs #1–#14 merged (#12 closed, replaced by #13). 99 tests pass; `firmware/eeg_node` unchanged since `8c2c586` (400,893 bytes flash, 11 %; 94,904 bytes RAM, 28 %). Open: draft PR for `docs/oura-data-sharing`.
 
 | Phase | Item | Status | Where |
 |---|---|---|---|
@@ -101,7 +101,7 @@ Code: confirm each line, fix anything wrong, fill the blanks, and note the date.
 9. ~~**Oura data in the demo (new 2026-11-22):** sleep stages only, or also HR/HRV and the sleep score? Which night? (It's context, not validation: the replayed EEG night is a different person.)~~ Farid (2026-11-22): **all of the data available**. Scopes on the Oura app page: Daily, Heartrate, Heart Health; all are requested and shown.
 10. ~~**PR #3 (new 2026-11-22):** it now holds tasks 4–7a. Review and merge before the demo, or after?~~ Merged 2026-11-23 with #4–#9 (master `8c2c586`).
 11. ~~**Demo display and calibration source (2026-11-22):**~~ Farid: build the laptop demo display (task 7d); calibrate the gain with a signal generator (100 mV p-p, 10 Hz, through a 100 kΩ / 100 Ω divider ≈ 100 µV p-p; recipe in `docs/bringup.md` step 5); the demo shows Oura data.
-12. **Oura view in the demo (new 2026-11-23):** show Farid's own nights (`demo_display.py oura`, his personal health data on the projector) or the sample nights (`oura --demo`)? Both are in `docs/demo-runbook.md` segment 3. Farid decides before the demo.
+12. ~~**Oura view in the demo (new 2026-11-23):** show Farid's own nights or the sample nights (`oura --demo`)?~~ **Farid's nights** (Farid, 2026-11-24: his Oura data may be shown for this work); `--demo` is the fallback.
 
 ## 5. Next tasks (in order)
 
@@ -128,6 +128,8 @@ Code: confirm each line, fix anything wrong, fill the blanks, and note the date.
 ## 6. Handoff log
 
 Newest first. One line per change: date, who, what, where.
+
+- 2026-11-24 · Claude Code (laptop) · **Farid's Oura data may now be shown** (Farid: "it is OK to show my OURA ring data. This is the new precedent for this work"). Replaces the never-show rule: his values and screens of his nights may go in the demo, slides, Notion, PRs, STATUS and docs. Unchanged: `data/` stays git-ignored, tests use fixtures or invented values (never files from `data/`), secret and tokens never printed, and `demo_display.py oura --save` still writes the ring's data only under `data/`. Updated `CLAUDE.md` Privacy, `docs/demo-runbook.md` segment 3 (his nights by default, `--demo` as fallback) and its checklist; §4 Q12 answered. Also recorded here (rule for status-only merges): **PR #14 merged** into master `95960ca` (Farid's instruction), `docs/motivation` deleted on GitHub and locally (confirmed in master first). Docs only; 99 tests pass. Notion updated.
 
 - 2026-11-24 · Claude Code (laptop) · **Project motivation** (cloud session's text, copied exactly): README "Why this project" (the Oura Ring infers deep sleep without EEG; PSG studies: right on average, poor per night; four studies with links; AASM position statement) and `docs/deep-sleep.md` new §0 "Why deep sleep is the lead topic" (sections 1–6 unchanged). Same wording as the HLD, Detailed Architecture, their Notion copies and the deck. Docs only; 99 tests pass. Also recorded here (rule for status-only merges): **PR #13 merged** into master `0ea382c` (Farid's instruction), `feature/oura-number-format` deleted on GitHub and locally; closed PR #12 left as is (Farid). Notion updated.
 
