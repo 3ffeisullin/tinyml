@@ -1,6 +1,6 @@
 # Front-end bring-up checklist (task 7)
 
-For the day the BioAmp EXG Pill and ADS1115 arrive (due around 2026-11-26; demo 2026-11-27). The firmware
+For the day the BioAmp EXG Pill and ADS1115 arrive (Tuesday 2026-12-01; demo Friday 2026-12-04). The firmware
 (`firmware/eeg_node`, task 7a) and the logging script (`scripts/live_log.py`) are ready; this list
 takes the hardware from bag to live signal in an order where each step isolates one thing.
 Requirement IDs refer to `docs/requirements.md`.

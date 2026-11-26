@@ -64,7 +64,7 @@ channel). That's one reason REM and quiet wake are hard for it to tell apart.
 ## 5. What hasn't been tested yet
 
 - **Our own headband.** Every result so far uses Sleep-EDF recordings or synthetic signals. The BioAmp EXG Pill and
-  ADS1115 front end hasn't recorded anything yet (parts due around 2026-11-26).
+  ADS1115 front end hasn't recorded anything yet (parts due Tuesday 2026-12-01).
 - **Our electrode placement.** We plan Fp1 (forehead, left) to mastoid (behind the ear); the training data is Fpz-Cz.
   These see somewhat different signals, so accuracy on our recordings is unknown until we measure it.
 - **Our environment.** Sleep-EDF was recorded in Europe (50 Hz mains) with 1980s–90s equipment; we record in the US

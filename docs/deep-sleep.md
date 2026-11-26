@@ -1,6 +1,6 @@
 # Deep sleep (N3): what it is, how well it can be measured, and where we stand
 
-Research note for the first demo (2026-11-27), where deep sleep is the lead topic. By Claude Code (laptop),
+Research note for the first demo (2026-12-04, moved from 11-27), where deep sleep is the lead topic. By Claude Code (laptop),
 2026-11-22. Results from this repo are reproducible with the scripts named; outside facts carry a source.
 
 ## 0. Why deep sleep is the lead topic
@@ -106,7 +106,7 @@ Both are cheap on the XIAO (two extra biquads plus a few counters per sample).
    deep-sleep epochs"). The display already shows the replayed hypnogram.
 2. **REQ-FEAT-12 slow-wave and spindle features** on Sleep-EDF; judge on deep-sleep minutes and macro F1; then decide
    on the mixed scaling of §4.
-3. **Bench calibration of `PILL_GAIN`** when the parts arrive (about 2026-11-26), so device µV are real.
+3. **Bench calibration of `PILL_GAIN`** when the parts arrive (Tuesday 2026-12-01), so device µV are real.
 4. **Oura comparison** (task 5): Oura's sleep periods give deep-sleep seconds and a 5-minute hypnogram
    (`deep_sleep_duration`, `sleep_phase_5_min` with 1 = deep), so a night on the headband can be compared with the
    ring's deep sleep. The ring is not the reference (see §2), and Oura's API terms restrict AI processing of its data
