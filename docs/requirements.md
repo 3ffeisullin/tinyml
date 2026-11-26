@@ -53,6 +53,7 @@ All parameters live in `eegml/config.py`; the firmware shall use the same values
 | REQ-ML-04 | The deployed model shall fit in 64 KB of flash and a 32 KB tensor arena, and run in under 50 ms per epoch on the ESP32-S3. | B | Serial log from the device (arena used, µs per inference) | Done (2026-11-21 on the XIAO: 6,336-byte model, arena used 956 bytes, 224 µs per inference, int8 outputs match Python 5/5; `reports/xiao_bench_2026-11-21.txt`) |
 | REQ-ML-05 | An artifact detector shall gate the sleep model; flagged epochs are excluded from staging and counted. | A, B | Artifact fraction in epoch records | Open |
 | REQ-ML-06 | Each model shall carry a version and the feature-schema version it expects; firmware shall refuse a mismatch. | B | Load a model with the wrong schema; device rejects it | Partial (2026-11-21): the header carries `SLEEP_MODEL_VERSION` and `SLEEP_MODEL_FEATURE_SCHEMA`; `eeg_node.ino` refuses a schema mismatch at start-up. Not yet tested with a wrong-schema model. |
+| REQ-ML-07 | A model comparison shall stage the same held-out nights under one protocol and report, for each candidate: macro F1, per-stage recall, per-night deep-sleep error in minutes (MAE, bias, r), and on-device cost (int8 size, arena, µs per epoch, or 'does not fit'). The protocol and candidates are in docs/model-comparison.md. | A | `reports/model_comparison.md` (after the demo) | Open |
 
 ## 4. Device-to-hub interface
 

@@ -7,8 +7,8 @@ before starting, and update it before you stop.
 
 ## 0. Resume here
 
-- **master** is at `0225a0c` (2026-11-24): PRs #3 → #15 merged as merge commits (#12 closed, replaced by #13; all by the cloud session, each on Farid's explicit one-time instruction; "Farid merges" still applies to every other PR). 98 tests pass. New work: a new branch from `master`.
-- **Branches:** only `master`. Merged and deleted: `feature/int8-sleep-model`, `feature/demo-display`, `feature/palma-review`, `feature/oura-app`, `feature/signal-quality`, `docs/post-merge-status`, `feature/demo-runbook`, `docs/status-after-pr9`, `docs/status-after-pr10`, `feature/oura-screen-check` (PR #12, closed), `feature/oura-number-format`, `docs/motivation`, `docs/oura-data-sharing`.
+- **master** is at `5ba490a` (2026-11-26): PRs #3 → #16 merged as merge commits (#12 closed, replaced by #13; all by the cloud session, each on Farid's explicit one-time instruction; "Farid merges" still applies to every other PR). 98 tests pass. New work: a new branch from `master`.
+- **Branches:** only `master`. Merged and deleted: `feature/int8-sleep-model`, `feature/demo-display`, `feature/palma-review`, `feature/oura-app`, `feature/signal-quality`, `docs/post-merge-status`, `feature/demo-runbook`, `docs/status-after-pr9`, `docs/status-after-pr10`, `feature/oura-screen-check` (PR #12, closed), `feature/oura-number-format`, `docs/motivation`, `docs/oura-data-sharing`, `chore/vscode-serial-monitor`.
 - **Read first:** `docs/deep-sleep.md` (deep sleep, the demo's lead topic: rule, accuracy of experts/Oura/us, next steps), `docs/palma-mapping.md` (what we take from Palma et al. 2024, and why), `docs/briefs/2026-11-22-demo-display.md` (task 7d), `docs/briefs/2026-11-22-deck-update.md` (everything since 2026-11-21, demo Plan A/B, risks, corrected figures), `docs/model-provenance.md` (where the model and data come from), `docs/bringup.md` (wiring-day checklist); details in the other `docs/briefs/`.
 - **On the XIAO:** the whole chain runs on the board. A replayed held-out night matches Python's stages on 100 % of epochs. The live path (core-0 acquisition → queue → core-1 processing → stages) ran 335 s from a fake 250 Hz source with 0 missed samples. Still to prove with the parts: the ADS1115 I2C reads, the ALERT/RDY interrupt and the ADC's real rate.
 - **Demo:** **Friday 2026-12-04** (moved from 11-27 by Farid on 2026-11-26: the Pill and ADS1115 arrive Tuesday 12-01; bring-up 12-01, Plan A dry run 12-02, decide A or B on 12-03), **with Oura data** (Farid, 2026-11-22). Plan A: live headband signal + replayed-night staging + Oura + on-device checks. Plan B (parts late): the same without live signal. In hand: resistors, capacitors, electrodes; the rest (BioAmp EXG Pill, ADS1115, …) is due around 2026-11-26.
@@ -34,7 +34,7 @@ before starting, and update it before you stop.
 
 ## 2. Current state
 
-**master is `0225a0c`** (2026-11-24): PRs #1–#15 merged (#12 closed, replaced by #13). 98 tests pass; `firmware/eeg_node` unchanged since `8c2c586` (400,893 bytes flash, 11 %; 94,904 bytes RAM, 28 %). Open: draft PR for `chore/vscode-serial-monitor`.
+**master is `5ba490a`** (2026-11-26): PRs #1–#16 merged (#12 closed, replaced by #13). 98 tests pass; `firmware/eeg_node` unchanged since `8c2c586` (400,893 bytes flash, 11 %; 94,904 bytes RAM, 28 %). Open: draft PR for `docs/model-comparison-plan`.
 
 | Phase | Item | Status | Where |
 |---|---|---|---|
@@ -124,10 +124,13 @@ Code: confirm each line, fix anything wrong, fill the blanks, and note the date.
 | 8 | ~~After Farid syncs the ring, pull and check the Oura screen~~ Done 2026-11-23 (`feature/oura-number-format`); screens of his data stay in `data/oura/` | Claude Code | REQ-OURA-04/05 |
 | 7e | **Plan A dry run** after bring-up (battery only, or the USB isolator with a projector): follow `docs/demo-runbook.md`, add results to its rehearsal log, send changed numbers to the cloud session (deck) | Claude Code | REQ-SAFE-01..03 |
 | 9 | **After the demo:** Docker hub (5b), overnight recording next to the ring (phase D, REQ-OURA-08/09), REQ-FEAT-12 slow-wave features, VBUS sense pin (REQ-SAFE-02), confirm a live token expiry (REQ-OURA-03), Ruff linter (Farid asked 2026-11-26: lint-only, no formatter; ruff in requirements.txt, small `[tool.ruff]` in a new `pyproject.toml` excluding `data/` and `firmware/`, fix findings, VS Code extension `charliermarsh.ruff` installed and recommended) | Claude Code | various |
+| 9a | **After the demo:** Model comparison ([`docs/model-comparison.md`](model-comparison.md), REQ-ML-07): candidates C0–C4 under one causal protocol on 78 subjects (plus the 20-subject numbers), results in `reports/model_comparison.md`, numbers to the cloud session for the report and deck | Claude Code | REQ-ML-07 |
 
 ## 6. Handoff log
 
 Newest first. One line per change: date, who, what, where.
+
+- 2026-11-26 · Claude Code (laptop) · **After-demo model comparison planned** (cloud session's task, docs only, no training run): new REQ-ML-07 (Open) and `docs/model-comparison.md` (protocol: 78 Sleep Cassette subjects with Fpz-Cz, seeded 5-fold by subject, same folds for all, causal only with running standardisation; candidates C0 current int8 net, C1 + causal HMM smoothing, C2 GRU/temporal conv over 10–20 epochs, C3 LightGBM, C4 compact raw-EEG net; decision rule; literature points marked not directly comparable). §5 row 9a. Also recorded here (rule for status-only merges): **PR #16 merged** into master `5ba490a` (Farid's instruction), `chore/vscode-serial-monitor` deleted on GitHub and locally (confirmed in master first). 98 tests pass. Notion updated.
 
 - 2026-11-26 · Claude Code (laptop) · **Demo moved to Friday 2026-12-04** (Farid). `docs/demo-runbook.md`: new Schedule (Tue 12-01 parts + bring-up, Wed 12-02 first Plan A dry run, Thu 12-03 day-before checklist and decide A or B, Fri 12-04 demo), dates in Plan A/B, day-before heading and rehearsal log. Dates also updated in `docs/bringup.md`, `docs/deep-sleep.md`, `docs/model-provenance.md` and STATUS §0.
 
