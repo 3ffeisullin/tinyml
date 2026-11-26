@@ -123,7 +123,7 @@ Code: confirm each line, fix anything wrong, fill the blanks, and note the date.
 | 7 | ADS1115 acquisition once parts arrive (Tuesday 2026-12-01): wiring and bring-up per `docs/bringup.md`, live band powers. Electrodes on a person only with the XIAO on battery, through the USB isolator, or with the laptop on battery (REQ-SAFE). | Claude Code | REQ-HW-*, REQ-ACQ-* |
 | 8 | ~~After Farid syncs the ring, pull and check the Oura screen~~ Done 2026-11-23 (`feature/oura-number-format`); screens of his data stay in `data/oura/` | Claude Code | REQ-OURA-04/05 |
 | 7e | **Plan A dry run** after bring-up (battery only, or the USB isolator with a projector): follow `docs/demo-runbook.md`, add results to its rehearsal log, send changed numbers to the cloud session (deck) | Claude Code | REQ-SAFE-01..03 |
-| 9 | **After the demo:** Docker hub (5b), overnight recording next to the ring (phase D, REQ-OURA-08/09), REQ-FEAT-12 slow-wave features, VBUS sense pin (REQ-SAFE-02), confirm a live token expiry (REQ-OURA-03) | Claude Code | various |
+| 9 | **After the demo:** Docker hub (5b), overnight recording next to the ring (phase D, REQ-OURA-08/09), REQ-FEAT-12 slow-wave features, VBUS sense pin (REQ-SAFE-02), confirm a live token expiry (REQ-OURA-03), Ruff linter (Farid asked 2026-11-26: lint-only, no formatter; ruff in requirements.txt, small `[tool.ruff]` in a new `pyproject.toml` excluding `data/` and `firmware/`, fix findings, VS Code extension `charliermarsh.ruff` installed and recommended) | Claude Code | various |
 
 ## 6. Handoff log
 
