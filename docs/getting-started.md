@@ -35,7 +35,12 @@ py -3.12 -m venv venv
 ## 3. Open it in VS Code
 
 1. **File → Open Folder…** and pick the `tinyml` folder (the repo itself, not its parent).
-2. Click **Install** when VS Code offers the recommended extensions (Python, Jupyter, C/C++, GitHub Pull Requests, Claude Code).
+2. Click **Install** when VS Code offers the recommended extensions (Python, Jupyter, C/C++, GitHub Pull Requests, Claude Code, Serial Monitor, Live Share).
+   Serial Monitor talks to the XIAO (COM5, 115200 baud, line ending LF or CRLF; send `TEST` or `STAT`); close it before running
+   `demo_display.py` or `replay_night.py`, which need the same COM port.
+   Live Share lets collaborators edit and debug together. `.vsls.json` in the repo root keeps git-ignored files
+   (`.env` with the Oura client secret, `data/`) out of a shared session. Don't share your terminal: it can read
+   the Oura tokens and your Git credentials.
 3. Check the bottom-right status bar shows **venv (3.12.x)**. On first open VS Code may warn
    **"An Invalid Python interpreter is selected"**. To fix it: Ctrl+Shift+P → **Python: Select Interpreter**
    → **Enter interpreter path…** → `C:\Users\<you>\tinyml\venv\Scripts\python.exe` (the `venv` folder

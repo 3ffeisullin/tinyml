@@ -6,6 +6,8 @@
     "ms-toolsai.jupyter",
     "ms-vscode.cpptools",
     "GitHub.vscode-pull-request-github",
-    "anthropic.claude-code"
+    "anthropic.claude-code",
+    "ms-vscode.vscode-serial-monitor",
+    "ms-vsliveshare.vsliveshare"
   ]
 }

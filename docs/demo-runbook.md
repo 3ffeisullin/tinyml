@@ -1,15 +1,29 @@
-# Demo runbook: Friday 2026-11-27
+# Demo runbook: Friday 2026-12-04
 
 What to run, in what order, what to say, and what to do when something fails. Rehearsed on the laptop
 on 2026-11-23 from `master` (`c970443`), Plan B end to end; results in [Rehearsal log](#rehearsal-log).
 
-- **Plan A** (parts wired and brought up on ~11-26): replayed night on the board → **live EEG from the
+- **Plan A** (parts arrive Tuesday 12-01, brought up and dry-run by Thursday 12-03): replayed night on the board → **live EEG from the
   headband** → Oura screen.
-- **Plan B** (parts late, or bring-up not finished): the same, with the live view on the board's fake
+- **Plan B** (bring-up or the Plan A dry run not finished by Thursday 12-03): the same, with the live view on the board's fake
   source instead of the headband.
 
 Total about 12–15 min plus questions. One board, one COM port: the replay and the live view run **one
 after the other**, never at the same time (switching between them needs nothing; rehearsed).
+
+## Schedule
+
+The demo moved from Friday 11-27 to Friday 12-04 (Farid, 2026-11-26) because the BioAmp EXG Pill and ADS1115
+arrive on Tuesday 12-01.
+
+| Day | What |
+|---|---|
+| Tue 12-01 | Parts arrive. Bring-up per [`docs/bringup.md`](bringup.md): wiring, ADS1115 found, measured sample rate, `PILL_GAIN` calibration, quality thresholds (step 7) |
+| Wed 12-02 | First Plan A dry run with the headband (battery only, or the USB isolator); fix what it shows |
+| Thu 12-03 | Day-before checklist below, one full timed dry run. **Decide Plan A or B by Thursday evening** |
+| Fri 12-04 | Morning checklist, demo |
+
+Plan B is rehearsed (2026-11-23) and needs nothing new, so it stays the fallback at every step.
 
 ## Safety first (REQ-SAFE-01..03), Plan A only
 
@@ -22,7 +36,7 @@ Electrodes on a person only when nothing connected to the person's circuit touch
 
 Plan B has no electrodes and no restrictions.
 
-## The day before (Thursday 11-26, after bring-up)
+## The day before (Thursday 12-03)
 
 - [ ] `git checkout master && git pull`; `.\venv\Scripts\python.exe -m pytest` passes.
 - [ ] Flash the exact build that will be shown:
@@ -143,4 +157,4 @@ macro F1 0.707. Next: overnight recordings next to the ring (phase D), deep-slee
 | 2026-11-23 | same | Replay fallback `--port none`, 120 epochs | starts and finishes in ~11 s |
 | 2026-11-23 | same | Oura screen, own data and `--demo` | ~2.5 s each; `--save` into `reports/` correctly refused for own data; token valid ~30 days |
 | 2026-11-23 | same | On-board self-tests (`TEST` command over USB) | filters within 6.5e-08 of full scale, 0/20 features out of tolerance (worst 0.004 of tolerance), 17 µs/sample, 5.2 ms/window; model parity 5/5, 224 µs/inference, arena 956 bytes; boot reports "ADC NOT found at 0x48" (expected: no ADS1115 yet) |
-| | | Plan A (headband) | after bring-up, ~11-26 |
+| | | Plan A (headband) | first dry run Wed 12-02, after bring-up on Tue 12-01 |
